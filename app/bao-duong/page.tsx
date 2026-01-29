@@ -1,0 +1,1 @@
+export default function Page() { return <div className="p-10 text-center text-2xl font-bold">Dịch vụ Bảo Dưỡng - Đang cập nhật...<br/><a href="/" className="text-blue-500 text-sm">Quay lại</a></div> }

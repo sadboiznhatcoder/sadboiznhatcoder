@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: #f8fafc;
+}
+
+@layer components {
+  /* Class dùng chung cho các nút bấm chọn */
+  .btn-option {
+    @apply w-full p-4 text-left border-2 border-slate-200 rounded-xl hover:bg-sky-50 hover:border-sky-500 hover:text-sky-700 transition-all duration-200 font-semibold text-slate-700 bg-white shadow-sm flex items-center justify-between;
+  }
+  
+  /* Hiệu ứng rung nhẹ cho nút gọi điện */
+  .animate-pulse-fast {
+    animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 20s linear infinite;
+  padding-left: 100%; /* Bắt đầu từ ngoài màn hình */
+}
+/* Hiệu ứng cuộn liền mạch (Infinite Scroll) */
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); } /* Chỉ trượt 50% vì ta nhân đôi nội dung */
+}
+
+.animate-infinite-scroll {
+  display: flex;
+  width: max-content; /* Nội dung dài bao nhiêu khung dài bấy nhiêu */
+  animation: scroll 40s linear infinite; /* Chỉnh số 40s nhỏ hơn nếu muốn chạy nhanh hơn */
+}
+
+/* Khi di chuột vào thì dừng lại cho dễ đọc */
+.animate-infinite-scroll:hover {
+  animation-play-state: paused;
+}
