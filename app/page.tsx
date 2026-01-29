@@ -4,7 +4,7 @@ import Link from "next/link";
 import { 
   X, Wrench, ShoppingCart, Settings, Repeat, 
   CheckCircle, Target, Heart, Award, MapPin, 
-  Facebook, MessageCircle, Phone, Factory, Cpu, Zap, Cog 
+  Facebook, MessageCircle, Phone, Factory, Cpu, Zap, Cog, Lock 
 } from "lucide-react";
 import CurrencyBar from "./components/CurrencyBar";
 
@@ -27,9 +27,14 @@ export default function Home() {
       {/* Thanh tỷ giá */}
       <CurrencyBar />
 
-      {/* Nút Admin Login (Ẩn góc phải) */}
-      <div className="absolute top-1 right-1 z-50 opacity-0 hover:opacity-100 transition-opacity">
-        <Link href="/admin" className="bg-slate-800 text-white text-[10px] px-2 py-1 rounded">Admin</Link>
+      {/* === NÚT ADMIN (GÓC TRÊN BÊN PHẢI - ĐÃ HIỆN RÕ) === */}
+      <div className="absolute top-2 right-2 z-50">
+        <Link 
+          href="/admin" 
+          className="flex items-center gap-1 bg-slate-800/80 text-white text-[10px] px-3 py-1.5 rounded-full hover:bg-red-600 transition shadow-sm backdrop-blur-sm"
+        >
+          <Lock size={10} /> Quản trị
+        </Link>
       </div>
 
       <div className="container mx-auto px-4 pb-12">
@@ -91,7 +96,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* === BANNER HERO (PHẦN MỚI) === */}
+        {/* === BANNER HERO === */}
         <section className="mt-6 mb-10 relative bg-gradient-to-r from-sky-900 to-indigo-900 rounded-3xl p-8 md:p-16 text-white overflow-hidden shadow-xl">
           {/* Background decoration */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -247,8 +252,14 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="text-center text-slate-600 text-xs mt-10 border-t border-slate-800 pt-6">
-            © 2026 CÔNG TY TNHH TỰ ĐỘNG HÓA N.A.T. All rights reserved.
+          
+          <div className="text-center text-slate-600 text-xs mt-10 border-t border-slate-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p>© 2026 CÔNG TY TNHH TỰ ĐỘNG HÓA N.A.T. All rights reserved.</p>
+            
+            {/* === LINK ĐĂNG NHẬP ADMIN (FOOTER) === */}
+            <Link href="/admin" className="flex items-center gap-1 hover:text-slate-400 transition">
+              <Lock size={12}/> Quản trị viên
+            </Link>
           </div>
         </footer>
       </div>
@@ -256,7 +267,7 @@ export default function Home() {
   );
 }
 
-// === CÁC COMPONENT CON (GIỮ CODE GỌN GÀNG) ===
+// === CÁC COMPONENT CON ===
 
 function MenuButton({ href, icon, title, desc, color }: any) {
   return (
