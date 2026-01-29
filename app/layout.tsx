@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Phone } from "lucide-react";
 import ChatWidget from "./ChatWidget";
+import { Analytics } from "@vercel/analytics/react"; // <-- MỚI CHÈN VÀO
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -47,6 +48,9 @@ export default function RootLayout({
 
         {/* CHÈN CON AI VÀO ĐÂY */}
         <ChatWidget />
+        
+        {/* CHÈN THỐNG KÊ TRUY CẬP Ở ĐÂY */}
+        <Analytics />
       </body>
     </html>
   );
