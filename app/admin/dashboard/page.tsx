@@ -47,14 +47,24 @@ function DashboardContent() {
     }
   }, []);
 
-  // === UPLOAD ẢNH ===
+  // === UPLOAD ẢNH (ĐÃ SỬA: Đổi tên file an toàn tuyệt đối) ===
   const uploadImage = async (file: File) => {
-    const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; // Xử lý tên file tránh lỗi ký tự lạ
+    // 1. Lấy đuôi file (jpg, png...)
+    const fileExt = file.name.split('.').pop();
+    
+    // 2. Tạo tên file ngẫu nhiên: ThờiGian-MãNgẫuNhiên.duoi
+    // Ví dụ: 171548392-a7f9z.jpg -> Đảm bảo không bao giờ lỗi ký tự lạ
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    
+    // 3. Upload lên Supabase
     const { data, error } = await supabase.storage.from('images').upload(fileName, file);
+
     if (error) {
         alert("Lỗi upload ảnh: " + error.message);
         return null;
     }
+
+    // 4. Lấy link public chuẩn
     const { data: urlData } = supabase.storage.from('images').getPublicUrl(fileName);
     return urlData.publicUrl;
   };
@@ -67,6 +77,12 @@ function DashboardContent() {
     const urls: string[] = [];
     
     for (const file of files) {
+        // Kiểm tra dung lượng (giới hạn 5MB cho an toàn)
+        if (file.size > 5 * 1024 * 1024) {
+            alert(`File ${file.name} quá lớn (>5MB). Vui lòng chọn ảnh nhỏ hơn.`);
+            continue;
+        }
+
         const url = await uploadImage(file);
         if (url) urls.push(url);
     }
@@ -79,7 +95,7 @@ function DashboardContent() {
     setIsLoading(false);
   };
 
-  // === XỬ LÝ SẢN PHẨM (CÓ BÁO LỖI) ===
+  // === XỬ LÝ SẢN PHẨM ===
   const submitProduct = async () => {
     if (!product.name) return alert("Vui lòng nhập tên sản phẩm!");
     
@@ -107,9 +123,9 @@ function DashboardContent() {
     }
     
     if (error) {
-        alert("❌ LỖI KHI LƯU: " + error.message + "\n(Chi tiết: " + error.details + ")");
+        alert("❌ LỖI KHI LƯU: " + error.message);
     } else {
-        alert("✅ Thành công! Dữ liệu đã được lưu vào Supabase.");
+        alert("✅ Đã đăng thành công!");
         await fetchData();
         resetForm();
         setActiveTab('list');
@@ -124,7 +140,7 @@ function DashboardContent() {
     else fetchData();
   };
 
-  // === XỬ LÝ BÀI VIẾT (CÓ BÁO LỖI) ===
+  // === XỬ LÝ BÀI VIẾT ===
   const submitPost = async () => {
     if (!post.title) return alert("Thiếu tiêu đề!");
     setIsLoading(true);
