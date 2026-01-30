@@ -1,38 +1,30 @@
-// Hàm kiểm tra xem Admin còn hạn đăng nhập không (24h)
-export const checkAdminAuth = () => {
-  if (typeof window === "undefined") return false;
-  
-  const session = localStorage.getItem("nat_admin_session");
-  if (!session) return false;
+"use client";
 
-  const { expiry } = JSON.parse(session);
-  const now = new Date().getTime();
-
-  // Nếu quá hạn (24h) -> Tự động xóa và bắt đăng nhập lại
-  if (now > expiry) {
-    logoutAdmin();
-    return false;
-  }
-  
-  return true;
-};
-
-// Hàm đăng nhập (Lưu thời gian hết hạn sau 24h)
+// Hàm đăng nhập: Lưu vào cookie để bảo mật hơn
 export const loginAdmin = () => {
-  const now = new Date().getTime();
-  const expiry = now + 24 * 60 * 60 * 1000; // 24 tiếng tính bằng mili-giây
-  
-  const session = {
-    isAdmin: true,
-    expiry: expiry
-  };
-  
-  localStorage.setItem("nat_admin_session", JSON.stringify(session));
+  // Lưu cookie hết hạn sau 1 ngày (86400 giây)
+  document.cookie = "isLoggedIn=true; path=/; max-age=86400; SameSite=Strict";
+  // Lưu thêm vào localStorage để tiện kiểm tra nhanh ở client
+  if (typeof window !== "undefined") {
+    localStorage.setItem("isLoggedIn", "true");
+  }
 };
 
-// Hàm đăng xuất
+// Hàm đăng xuất: Xóa sạch mọi thứ
 export const logoutAdmin = () => {
-  localStorage.removeItem("nat_admin_session");
-  // Chuyển hướng về trang chủ
-  window.location.href = "/admin"; 
+  // Xóa cookie bằng cách đặt ngày hết hạn về quá khứ
+  document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("isLoggedIn");
+  }
+};
+
+// Hàm kiểm tra trạng thái đăng nhập
+export const checkAuth = () => {
+  if (typeof window === "undefined") return false;
+  // Kiểm tra cookie ưu tiên
+  const cookieAuth = document.cookie.split('; ').find(row => row.startsWith('isLoggedIn='));
+  const localAuth = localStorage.getItem("isLoggedIn");
+  
+  return !!cookieAuth || localAuth === "true";
 };
