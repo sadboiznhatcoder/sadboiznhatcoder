@@ -2,253 +2,254 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
-  X, Wrench, ShoppingCart, Settings, Repeat, 
-  Target, Heart, Award, MapPin, 
-  Facebook, MessageCircle, Phone, Factory, Cpu, Zap, Cog, Lock,
-  ArrowRight
+  Wrench, ShoppingCart, Settings, Repeat, 
+  CheckCircle, Phone, ArrowRight, Clock, MapPin, Star 
 } from "lucide-react";
-import CurrencyBar from "./components/CurrencyBar";
+import { supabase } from "./utils/supabase";
 
 export default function Home() {
-  const [showPopup, setShowPopup] = useState(false);
-  const [introPosts, setIntroPosts] = useState<any[]>([]); // State chứa bài giới thiệu
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Link thông tin
-  const mapLink = "https://maps.app.goo.gl/kHbAY7UMg4NFdYXC6";
-  const zaloLink = "https://zalo.me/0912258461";
-  const fbLink = "https://www.facebook.com/vo.nhon.1?locale=vi_VN";
-  const address = "74 Đại Hưng, Lạc Thị, Ngọc Hồi, Thanh Trì, Hà Nội";
-
+  // === TẢI BÀI VIẾT TỪ SUPABASE ===
   useEffect(() => {
-    const timer = setTimeout(() => setShowPopup(true), 1000);
-    
-    // Tải bài giới thiệu từ Admin đăng
-    const posts = JSON.parse(localStorage.getItem("nat_intro_posts") || "[]");
-    setIntroPosts(posts);
+    const fetchPosts = async () => {
+      // Lấy dữ liệu từ bảng 'posts', sắp xếp mới nhất lên đầu
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    return () => clearTimeout(timer);
+      if (error) {
+        console.error("Lỗi tải bài viết:", error);
+      } else {
+        setPosts(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchPosts();
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-50 font-sans">
-      <CurrencyBar />
-
-      <div className="absolute top-2 right-2 z-50">
-        <Link href="/admin" className="flex items-center gap-1 bg-slate-800/80 text-white text-[10px] px-3 py-1.5 rounded-full hover:bg-red-600 transition shadow-sm backdrop-blur-sm">
-          <Lock size={10} /> Quản trị
-        </Link>
+    <div className="min-h-screen font-sans">
+      
+      {/* === PHẦN 1: HERO BANNER (Dữ liệu tĩnh) === */}
+      <div className="relative h-[500px] bg-slate-900 flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-40 animate-in fade-in duration-1000"></div>
+        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+          <span className="bg-yellow-500 text-slate-900 font-bold px-3 py-1 rounded text-sm md:text-base mb-4 inline-block animate-bounce">
+            UY TÍN - TẬN TÂM - CHUYÊN NGHIỆP
+          </span>
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
+            GIẢI PHÁP TỰ ĐỘNG HÓA <br/> <span className="text-sky-400">TOÀN DIỆN CHO BẠN</span>
+          </h1>
+          <p className="text-slate-200 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
+            Chuyên cung cấp, sửa chữa và bảo dưỡng máy CNC, biến tần, servo và linh kiện công nghiệp tại Tây Ninh.
+          </p>
+          <div className="flex flex-col md:flex-row gap-4 justify-center">
+            <Link href="/mua-ban" className="bg-sky-600 hover:bg-sky-700 text-white px-8 py-3 rounded-full font-bold transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
+              <ShoppingCart size={20}/> XEM SẢN PHẨM
+            </Link>
+            <a href="tel:0912258461" className="bg-white hover:bg-slate-100 text-slate-900 px-8 py-3 rounded-full font-bold transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
+              <Phone size={20}/> TƯ VẤN MIỄN PHÍ
+            </a>
+          </div>
+        </div>
       </div>
 
-      <div className="container mx-auto px-4 pb-12">
-        
-        {/* POPUP (Giữ nguyên) */}
-        {showPopup && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in zoom-in duration-300">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative overflow-hidden border-2 border-sky-600">
-              <button onClick={() => setShowPopup(false)} className="absolute top-2 right-2 bg-gray-100 rounded-full p-2 hover:bg-red-500 hover:text-white transition z-10"><X size={20} /></button>
-              <div className="bg-sky-700 p-6 text-center text-white relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
-                <h2 className="text-2xl font-black uppercase relative z-10">Tự Động Hóa N.A.T</h2>
-                <p className="italic mt-1 text-sky-100 text-sm relative z-10">"Giải pháp CNC toàn diện & Tin cậy"</p>
-              </div>
-              <div className="p-6 space-y-5">
-                <a href={mapLink} target="_blank" rel="noreferrer" className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl hover:bg-sky-50 transition border border-slate-100 group">
-                  <div className="bg-red-100 p-2 rounded-full text-red-600 group-hover:scale-110 transition"><MapPin size={24} /></div>
-                  <div><span className="text-xs font-bold text-slate-500 uppercase">Địa chỉ trụ sở:</span><p className="text-slate-800 font-medium text-sm leading-tight mt-1 group-hover:text-sky-700 transition">{address}</p><span className="text-xs text-sky-600 italic underline">Xem bản đồ</span></div>
-                </a>
-                <div className="grid grid-cols-2 gap-3">
-                  <a href={zaloLink} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-blue-500 text-white py-3 rounded-xl font-bold hover:bg-blue-600 transition shadow-lg shadow-blue-200"><MessageCircle size={20} /> Chat Zalo</a>
-                  <a href={fbLink} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"><Facebook size={20} /> Facebook</a>
-                </div>
-                <div className="text-center pt-2 border-t border-slate-100">
-                   <p className="text-slate-500 text-sm mb-2">Hoặc gọi Hotline kỹ thuật:</p>
-                   <a href="tel:0912258461" className="text-3xl font-black text-red-600 hover:scale-105 transition inline-block">0912 258 461</a>
-                </div>
-                <button onClick={() => setShowPopup(false)} className="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition">Vào Trang Web</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* HERO BANNER (Giữ nguyên) */}
-        <section className="mt-6 mb-10 relative bg-gradient-to-r from-sky-900 to-indigo-900 rounded-3xl p-8 md:p-16 text-white overflow-hidden shadow-xl">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-yellow-400 opacity-10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
-          <div className="relative z-10 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-10">
-            <div className="md:w-2/3">
-              <span className="bg-yellow-400 text-slate-900 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 inline-block">Since 2010</span>
-              <h1 className="text-3xl md:text-5xl font-black leading-tight mb-4">DỊCH VỤ KỸ THUẬT <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">MÁY CNC CHUYÊN SÂU</span></h1>
-              <p className="text-sky-100 text-lg mb-8 max-w-xl leading-relaxed">Chuyên sửa chữa, bảo dưỡng, nâng cấp và cung cấp linh kiện cho các dòng máy Phay, Tiện, Cắt dây CNC. Đối tác tin cậy của hàng trăm doanh nghiệp cơ khí.</p>
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                <a href="#dich-vu" className="bg-white text-sky-900 px-6 py-3 rounded-full font-bold hover:bg-yellow-400 hover:text-slate-900 transition shadow-lg">Xem Dịch Vụ</a>
-                <a href={zaloLink} target="_blank" className="bg-sky-700 border border-sky-500 text-white px-6 py-3 rounded-full font-bold hover:bg-sky-600 transition flex items-center gap-2"><MessageCircle size={18}/> Tư vấn miễn phí</a>
-              </div>
-            </div>
-            <div className="md:w-1/3 flex justify-center">
-              <div className="relative w-48 h-48">
-                <div className="absolute inset-0 bg-sky-500/20 rounded-full animate-ping"></div>
-                <div className="absolute inset-4 bg-sky-500/40 rounded-full animate-pulse"></div>
-                <div className="absolute inset-0 flex items-center justify-center"><Cog size={80} className="text-yellow-400 animate-spin-slow" /></div>
-                <div className="absolute -top-4 -right-4 bg-white p-3 rounded-xl shadow-lg animate-bounce"><Cpu size={32} className="text-blue-600"/></div>
-                <div className="absolute -bottom-4 -left-4 bg-white p-3 rounded-xl shadow-lg animate-bounce" style={{animationDelay: '0.5s'}}><Factory size={32} className="text-orange-600"/></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* MENU DỊCH VỤ */}
-        <div id="dich-vu" className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-16">
-          <MenuButton href="/sua-chua" icon={<Wrench size={32}/>} title="SỬA CHỮA" desc="Xử lý lỗi nhanh 24/7" color="bg-orange-500" />
-          <MenuButton href="/bao-duong" icon={<Settings size={32}/>} title="BẢO DƯỠNG" desc="Định kỳ, nâng cấp" color="bg-green-600" />
-          <MenuButton href="/mua-ban" icon={<ShoppingCart size={32}/>} title="MUA BÁN" desc="Máy & Thiết bị CNC" color="bg-blue-600" />
-          <MenuButton href="/linh-kien" icon={<Repeat size={32}/>} title="LINH KIỆN" desc="Chính hãng, giá tốt" color="bg-purple-600" />
-        </div>
-
-        {/* ======================================================== */}
-        {/* ========= KHU VỰC BÀI VIẾT GIỚI THIỆU (DYNAMIC) ======== */}
-        {/* ======================================================== */}
-        {introPosts.length > 0 && (
-          <section className="mb-20 space-y-16">
-            <div className="text-center mb-8">
-               <h2 className="text-2xl md:text-3xl font-bold text-slate-800 uppercase">Hoạt Động & Công Nghệ</h2>
-               <div className="w-20 h-1 bg-orange-500 mx-auto mt-2 rounded-full"></div>
-            </div>
-
-            {introPosts.map((post, index) => (
-              <div 
-                key={post.id} 
-                className={`flex flex-col md:flex-row items-center gap-8 md:gap-12 ${index % 2 !== 0 ? 'md:flex-row-reverse' : ''}`} // Logic So-Le: Lẻ thì đảo ngược
-              >
-                {/* Cột Ảnh */}
-                <div className="w-full md:w-1/2">
-                   <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white rotate-1 hover:rotate-0 transition duration-500">
-                      <img src={post.image} alt={post.title} className="w-full h-64 md:h-80 object-cover hover:scale-110 transition duration-700" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition duration-500"></div>
-                   </div>
-                </div>
-
-                {/* Cột Nội Dung */}
-                <div className="w-full md:w-1/2 space-y-4">
-                   <div className="flex items-center gap-2 text-orange-600 font-bold uppercase text-xs tracking-wider">
-                      <span className="w-8 h-[2px] bg-orange-600"></span> Tin N.A.T
-                   </div>
-                   <h3 className="text-2xl md:text-3xl font-bold text-slate-800 leading-tight">
-                     {post.title}
-                   </h3>
-                   <p className="text-slate-600 leading-relaxed text-justify whitespace-pre-line text-lg">
-                     {post.content}
-                   </p>
-                   <Link href="/sua-chua" className="inline-flex items-center gap-2 text-sky-700 font-bold hover:gap-4 transition-all">
-                      Liên hệ ngay <ArrowRight size={18}/>
-                   </Link>
-                </div>
-              </div>
-            ))}
-          </section>
-        )}
-
-        {/* TẠI SAO CHỌN N.A.T */}
-        <section className="mb-16">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-800 uppercase">Tại sao chọn N.A.T?</h2>
-            <div className="w-16 h-1 bg-yellow-400 mx-auto mt-2 rounded-full"></div>
+      {/* === PHẦN 2: DANH MỤC DỊCH VỤ (4 Ô TRÒN) === */}
+      <div className="bg-slate-50 py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-slate-800 uppercase mb-2">Dịch Vụ Của Chúng Tôi</h2>
+            <div className="w-20 h-1 bg-sky-600 mx-auto rounded-full"></div>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6">
-            <FeatureCard icon={<Zap size={40} className="text-yellow-500"/>} title="Tốc Độ & Chính Xác" desc="Có mặt trong vòng 24h khi khách hàng báo lỗi. Chẩn đoán chính xác, xử lý dứt điểm." />
-            <FeatureCard icon={<Award size={40} className="text-red-500"/>} title="Kinh Nghiệm 15+ Năm" desc="Đội ngũ kỹ sư trưởng thành từ thực tế, am hiểu sâu sắc các hệ điều khiển Fanuc, Mitsubishi, Siemens." />
-            <FeatureCard icon={<Heart size={40} className="text-pink-500"/>} title="Hậu Mãi Tận Tâm" desc="Bảo hành dài hạn cho dịch vụ sửa chữa. Tư vấn kỹ thuật miễn phí trọn đời máy." />
-          </div>
-        </section>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+            {/* Ô 1: Sửa Chữa */}
+            <Link href="/sua-chua" className="group bg-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-slate-100 hover:border-sky-500 transition-all text-center">
+              <div className="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <Wrench size={32} />
+              </div>
+              <h3 className="font-bold text-slate-800 group-hover:text-blue-600">SỬA CHỮA</h3>
+              <p className="text-xs text-slate-500 mt-2">Biến tần, Servo, HMI...</p>
+            </Link>
 
-        {/* GIỚI THIỆU CÔNG TY */}
-        <section className="bg-white rounded-2xl p-8 md:p-12 shadow-sm border border-slate-100">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-black text-sky-800 uppercase mb-2">Hồ Sơ Năng Lực</h2>
-            <div className="w-20 h-1 bg-yellow-400 mx-auto rounded-full"></div>
-          </div>
+            {/* Ô 2: Bảo Dưỡng */}
+            <Link href="/bao-duong" className="group bg-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-slate-100 hover:border-green-500 transition-all text-center">
+              <div className="bg-green-100 text-green-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-600 group-hover:text-white transition-colors">
+                <Settings size={32} />
+              </div>
+              <h3 className="font-bold text-slate-800 group-hover:text-green-600">BẢO DƯỠNG</h3>
+              <p className="text-xs text-slate-500 mt-2">Định kỳ, nâng cấp máy</p>
+            </Link>
 
-          <div className="grid md:grid-cols-2 gap-10 items-center">
-            <div className="space-y-6 text-slate-700 text-justify">
-              <p className="text-lg leading-relaxed"><strong className="text-sky-700">CÔNG TY TNHH TỰ ĐỘNG HÓA N.A.T</strong> được hình thành từ niềm đam mê kỹ thuật điện – điện tử và nhu cầu thực tế của nền công nghiệp. Với đội ngũ kỹ thuật viên trẻ, năng động và chuyên môn cao, chúng tôi đã và đang khẳng định thương hiệu vượt trội về kỹ thuật và chất lượng.</p>
-              <div className="bg-slate-50 border-l-4 border-yellow-400 p-4 italic text-slate-600">"Chúng tôi không chỉ bán sản phẩm, chúng tôi bán sự yên tâm và dịch vụ kỹ thuật tin cậy nhất."</div>
+            {/* Ô 3: Mua Bán */}
+            <Link href="/mua-ban" className="group bg-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-slate-100 hover:border-red-500 transition-all text-center">
+              <div className="bg-red-100 text-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                <ShoppingCart size={32} />
+              </div>
+              <h3 className="font-bold text-slate-800 group-hover:text-red-600">MUA BÁN</h3>
+              <p className="text-xs text-slate-500 mt-2">Máy móc nhập khẩu</p>
+            </Link>
+
+            {/* Ô 4: Linh Kiện */}
+            <Link href="/linh-kien" className="group bg-white p-6 rounded-2xl shadow-md hover:shadow-xl border border-slate-100 hover:border-purple-500 transition-all text-center">
+              <div className="bg-purple-100 text-purple-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                <Repeat size={32} />
+              </div>
+              <h3 className="font-bold text-slate-800 group-hover:text-purple-600">LINH KIỆN</h3>
+              <p className="text-xs text-slate-500 mt-2">Phụ tùng thay thế</p>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* === PHẦN 3: TIN TỨC / BÀI VIẾT (GIAO DIỆN SO-LE) === */}
+      {/* Chỉ hiện khi có bài viết */}
+      {posts.length > 0 && (
+        <div className="bg-white py-16 px-4 border-t border-slate-100">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">
+                Hoạt động & Kiến thức
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900">GÓC CHUYÊN GIA N.A.T</h2>
             </div>
-            <div className="grid grid-cols-1 gap-4">
-              <InfoCard icon={<Target className="text-red-500" />} title="TẦM NHÌN CHIẾN LƯỢC" desc="Trở thành công ty quy mô chuyên nghiệp nhất trong lĩnh vực cung cấp máy công cụ và dịch vụ kỹ thuật cao tự động hóa." />
-              <InfoCard icon={<Heart className="text-pink-500" />} title="SỨ MỆNH CỐT LÕI" desc="Đồng hành tin cậy, nâng bước thành công của khách hàng. Là nền tảng vững vàng cho sự phát triển của toàn thể nhân viên." />
+
+            <div className="space-y-20">
+              {posts.map((post, index) => (
+                <div 
+                  key={post.id} 
+                  className={`flex flex-col md:flex-row items-center gap-8 md:gap-16 ${index % 2 !== 0 ? 'md:flex-row-reverse' : ''}`}
+                >
+                  {/* Cột Ảnh */}
+                  <div className="w-full md:w-1/2 group">
+                    <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-video border-4 border-white bg-slate-100">
+                      <img 
+                        src={post.image || "https://via.placeholder.com/600x400"} 
+                        alt={post.title}
+                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                      />
+                      {/* Hiệu ứng bóng */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                  </div>
+
+                  {/* Cột Nội dung */}
+                  <div className="w-full md:w-1/2">
+                    <div className="flex items-center gap-2 mb-4 text-slate-400 text-sm">
+                      <Clock size={16}/>
+                      <span>{new Date(post.created_at).toLocaleDateString('vi-VN')}</span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-4 leading-tight group-hover:text-sky-700 transition-colors">
+                      {post.title}
+                    </h3>
+                    <div className="w-16 h-1 bg-yellow-400 mb-6"></div>
+                    <p className="text-slate-600 text-lg leading-relaxed mb-6 line-clamp-4">
+                      {post.content}
+                    </p>
+                    {/* Nút Xem chi tiết giả lập (có thể làm trang riêng sau này) */}
+                    <button className="flex items-center gap-2 text-sky-600 font-bold hover:gap-4 transition-all">
+                      Xem chi tiết <ArrowRight size={18}/>
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+        </div>
+      )}
+      {/* Nếu đang tải thì hiện skeleton nhẹ */}
+      {loading && (
+        <div className="py-20 text-center">
+            <div className="inline-block w-8 h-8 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>
+        </div>
+      )}
 
-          <div className="mt-12 pt-8 border-t border-slate-100 overflow-hidden">
-            <p className="text-center text-slate-400 text-xs uppercase font-bold mb-4 tracking-widest">Chuyên gia các hệ điều hành</p>
-            <div className="flex gap-8 justify-center opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-               <span className="font-black text-2xl">FANUC</span>
-               <span className="font-black text-2xl">MITSUBISHI</span>
-               <span className="font-black text-2xl">SIEMENS</span>
-               <span className="font-black text-2xl">YASKAWA</span>
-               <span className="font-black text-2xl">OKUMA</span>
-            </div>
-          </div>
-        </section>
+      {/* === PHẦN 4: TẠI SAO CHỌN N.A.T ? === */}
+      <div className="bg-slate-900 text-white py-20 px-4 relative overflow-hidden">
+        {/* Background họa tiết mờ */}
+        <div className="absolute top-0 right-0 p-10 opacity-5">
+           <Settings size={300} />
+        </div>
 
-        {/* FOOTER */}
-        <footer className="mt-16 bg-slate-900 text-white rounded-t-3xl p-8 md:p-12">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-2xl font-bold mb-4 uppercase text-yellow-400">Liên Hệ Với Chúng Tôi</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3"><MapPin className="mt-1 text-sky-400 flex-shrink-0" /><a href={mapLink} target="_blank" rel="noreferrer" className="hover:text-sky-300 transition">{address}<span className="block text-xs text-slate-500 mt-1">(Bấm để xem bản đồ)</span></a></li>
-                <li className="flex items-center gap-3"><Phone className="text-sky-400 flex-shrink-0" /><a href="tel:0912258461" className="text-xl font-bold hover:text-sky-300 transition">0912 258 461</a></li>
-              </ul>
-            </div>
-            <div className="flex flex-col items-center md:items-end gap-4">
-              <p className="text-slate-400 text-sm">Kết nối mạng xã hội:</p>
-              <div className="flex gap-4">
-                <a href={zaloLink} target="_blank" rel="noreferrer" className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg shadow-blue-500/30"><span className="font-bold text-[10px]">Zalo</span></a>
-                <a href={fbLink} target="_blank" rel="noreferrer" className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg shadow-indigo-600/30"><Facebook size={24}/></a>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                Tại Sao Chọn <span className="text-yellow-400">N.A.T Automation?</span>
+              </h2>
+              <p className="text-slate-300 mb-8 text-lg">
+                Với hơn 10 năm kinh nghiệm trong lĩnh vực tự động hóa, chúng tôi cam kết mang lại giải pháp tối ưu nhất cho nhà máy của bạn.
+              </p>
+              
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="bg-green-500/20 p-3 rounded-lg text-green-400"><CheckCircle size={24}/></div>
+                  <div>
+                    <h4 className="font-bold text-xl">Linh kiện chính hãng</h4>
+                    <p className="text-slate-400 text-sm">Nguồn gốc xuất xứ rõ ràng, bảo hành dài hạn.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="bg-blue-500/20 p-3 rounded-lg text-blue-400"><Clock size={24}/></div>
+                  <div>
+                    <h4 className="font-bold text-xl">Hỗ trợ 24/7</h4>
+                    <p className="text-slate-400 text-sm">Có mặt ngay khi máy gặp sự cố.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="bg-yellow-500/20 p-3 rounded-lg text-yellow-400"><Star size={24}/></div>
+                  <div>
+                    <h4 className="font-bold text-xl">Kỹ thuật viên lành nghề</h4>
+                    <p className="text-slate-400 text-sm">Đội ngũ kỹ sư giàu kinh nghiệm thực chiến.</p>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Form liên hệ nhanh */}
+            <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20">
+              <h3 className="text-xl font-bold mb-4 text-center">Gửi Yêu Cầu Tư Vấn</h3>
+              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                <input className="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-3 text-white focus:ring-2 ring-sky-500 outline-none" placeholder="Tên của bạn" />
+                <input className="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-3 text-white focus:ring-2 ring-sky-500 outline-none" placeholder="Số điện thoại" />
+                <textarea className="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-3 text-white h-24 focus:ring-2 ring-sky-500 outline-none" placeholder="Nội dung cần hỗ trợ..."></textarea>
+                <button className="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-lg transition">GỬI NGAY</button>
+              </form>
+            </div>
           </div>
-          <div className="text-center text-slate-600 text-xs mt-10 border-t border-slate-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>© 2026 CÔNG TY TNHH TỰ ĐỘNG HÓA N.A.T. All rights reserved.</p>
-            <Link href="/admin" className="flex items-center gap-1 hover:text-slate-400 transition"><Lock size={12}/> Quản trị viên</Link>
-          </div>
-        </footer>
+        </div>
       </div>
-    </main>
-  );
-}
 
-// COMPONENT CON
-function MenuButton({ href, icon, title, desc, color }: any) {
-  return (
-    <Link href={href} className={`${color} text-white group flex flex-col items-center justify-center p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 min-h-[160px] text-center relative overflow-hidden`}>
-      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-500">{icon}</div>
-      <div className="bg-white/20 p-4 rounded-full mb-3 group-hover:scale-110 transition-transform relative z-10">{icon}</div>
-      <span className="font-bold text-lg md:text-xl relative z-10">{title}</span>
-      <span className="text-xs md:text-sm opacity-90 mt-1 font-medium relative z-10">{desc}</span>
-    </Link>
-  );
-}
-
-function InfoCard({ icon, title, desc }: any) {
-  return (
-    <div className="flex items-start gap-4 p-4 bg-slate-50 border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition group">
-      <div className="p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition">{icon}</div>
-      <div>
-        <h4 className="font-bold text-slate-800 text-sm uppercase group-hover:text-sky-700 transition">{title}</h4>
-        <p className="text-sm text-slate-600 mt-1 leading-relaxed">{desc}</p>
-      </div>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, desc }: any) {
-  return (
-    <div className="bg-white p-6 rounded-2xl shadow hover:shadow-xl hover:-translate-y-1 transition duration-300 border border-slate-100 text-center">
-      <div className="w-16 h-16 mx-auto bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-700">{icon}</div>
-      <h3 className="font-bold text-lg text-slate-800 mb-2">{title}</h3>
-      <p className="text-sm text-slate-600 leading-relaxed">{desc}</p>
+      {/* === FOOTER === */}
+      <footer className="bg-slate-950 text-slate-400 py-12 px-4 border-t border-slate-900">
+         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h4 className="text-white font-bold text-lg mb-4 uppercase">CÔNG TY TNHH TỰ ĐỘNG HÓA N.A.T</h4>
+              <p className="text-sm mb-4">Đồng hành cùng sự phát triển của doanh nghiệp Việt.</p>
+            </div>
+            <div>
+              <h4 className="text-white font-bold text-lg mb-4">LIÊN HỆ</h4>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2"><MapPin size={16} className="text-sky-500"/> Tây Ninh, Việt Nam</li>
+                <li className="flex items-center gap-2"><Phone size={16} className="text-sky-500"/> 0912.258.461</li>
+              </ul>
+            </div>
+            <div>
+               <h4 className="text-white font-bold text-lg mb-4">THEO DÕI</h4>
+               <div className="flex gap-4">
+                  <a href="#" className="w-10 h-10 bg-slate-800 flex items-center justify-center rounded hover:bg-blue-600 transition text-white">FB</a>
+                  <a href="#" className="w-10 h-10 bg-slate-800 flex items-center justify-center rounded hover:bg-red-600 transition text-white">YT</a>
+               </div>
+            </div>
+         </div>
+         <div className="text-center mt-12 pt-8 border-t border-slate-900 text-xs text-slate-600">
+            © 2024 N.A.T Automation. All rights reserved.
+         </div>
+      </footer>
     </div>
   );
 }
