@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ImagePlus, LogOut, Trash2, Pencil, Package, List, PlusCircle, ArrowLeft, Newspaper, Loader2 } from "lucide-react";
+// 👇 Đã thêm icon X vào danh sách import
+import { ImagePlus, LogOut, Trash2, Pencil, Package, List, PlusCircle, ArrowLeft, Newspaper, Loader2, X } from "lucide-react";
 import { checkAuth, logoutAdmin } from "../../utils/auth";
 import { supabase } from "../../utils/supabase";
 
@@ -49,14 +50,9 @@ function DashboardContent() {
 
   // === UPLOAD ẢNH (ĐÃ SỬA: Đổi tên file an toàn tuyệt đối) ===
   const uploadImage = async (file: File) => {
-    // 1. Lấy đuôi file (jpg, png...)
     const fileExt = file.name.split('.').pop();
-    
-    // 2. Tạo tên file ngẫu nhiên: ThờiGian-MãNgẫuNhiên.duoi
-    // Ví dụ: 171548392-a7f9z.jpg -> Đảm bảo không bao giờ lỗi ký tự lạ
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     
-    // 3. Upload lên Supabase
     const { data, error } = await supabase.storage.from('images').upload(fileName, file);
 
     if (error) {
@@ -64,7 +60,6 @@ function DashboardContent() {
         return null;
     }
 
-    // 4. Lấy link public chuẩn
     const { data: urlData } = supabase.storage.from('images').getPublicUrl(fileName);
     return urlData.publicUrl;
   };
@@ -77,7 +72,6 @@ function DashboardContent() {
     const urls: string[] = [];
     
     for (const file of files) {
-        // Kiểm tra dung lượng (giới hạn 5MB cho an toàn)
         if (file.size > 5 * 1024 * 1024) {
             alert(`File ${file.name} quá lớn (>5MB). Vui lòng chọn ảnh nhỏ hơn.`);
             continue;
@@ -90,6 +84,7 @@ function DashboardContent() {
     if (type === 'product') {
         setProduct(prev => ({ ...prev, images: [...prev.images, ...urls] }));
     } else {
+        // Với bài viết, chỉ lấy ảnh đầu tiên
         setPost(prev => ({ ...prev, image: urls[0] }));
     }
     setIsLoading(false);
@@ -100,7 +95,6 @@ function DashboardContent() {
     if (!product.name) return alert("Vui lòng nhập tên sản phẩm!");
     
     setIsLoading(true);
-    // Xử lý số lượng để tránh lỗi NaN
     const safeQuantity = isNaN(Number(product.quantity)) ? 0 : Number(product.quantity);
 
     const productData = {
@@ -148,7 +142,7 @@ function DashboardContent() {
     const postData = {
         title: post.title,
         content: post.content,
-        image: post.image
+        image: post.image // Nếu image là chuỗi rỗng "" thì nó sẽ xóa ảnh trong DB
     };
 
     let error;
@@ -242,9 +236,9 @@ function DashboardContent() {
                       <label className="block text-sm font-bold text-slate-600 mb-2">Ảnh sản phẩm ({product.images.length})</label>
                       <div className="flex gap-2 flex-wrap">
                         {product.images.map((img, idx) => (
-                          <div key={idx} className="w-20 h-20 relative border rounded overflow-hidden">
+                          <div key={idx} className="w-20 h-20 relative border rounded overflow-hidden group">
                             <img src={img} className="w-full h-full object-cover" />
-                            <button onClick={() => setProduct(p => ({...p, images: p.images.filter((_,i)=>i!==idx)}))} className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 text-xs">X</button>
+                            <button onClick={() => setProduct(p => ({...p, images: p.images.filter((_,i)=>i!==idx)}))} className="absolute top-0 right-0 bg-red-500 text-white w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"><X size={12}/></button>
                           </div>
                         ))}
                         <label className="w-20 h-20 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 rounded text-slate-400">
@@ -296,9 +290,24 @@ function DashboardContent() {
                     <textarea className="w-full p-3 border rounded-lg h-40" placeholder="Nội dung..." value={post.content} onChange={e => setPost({...post, content: e.target.value})}></textarea>
                     
                     <div className="flex items-center gap-4">
-                        {post.image && <img src={post.image} className="w-32 h-20 object-cover rounded border" />}
-                        <label className="px-4 py-2 border border-dashed rounded cursor-pointer hover:bg-orange-50 text-orange-600 flex gap-2">
-                            <input type="file" onChange={(e) => handleImageSelect(e, 'post')} className="hidden"/> <ImagePlus size={20}/> Chọn ảnh bìa
+                        {/* 👇👇👇 PHẦN SỬA ĐỔI CHÍNH Ở ĐÂY: Thêm nút xóa ảnh 👇👇👇 */}
+                        {post.image ? (
+                          <div className="relative group">
+                            <img src={post.image} className="w-32 h-20 object-cover rounded-lg border border-slate-300" />
+                            <button 
+                                onClick={() => setPost({ ...post, image: "" })} 
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-transform transform hover:scale-110"
+                                title="Xóa ảnh này"
+                            >
+                                <X size={14} />
+                            </button>
+                          </div>
+                        ) : null}
+
+                        <label className="px-4 py-2 border border-dashed border-slate-300 rounded-lg cursor-pointer hover:bg-orange-50 hover:border-orange-300 text-slate-500 hover:text-orange-600 flex gap-2 items-center transition-all">
+                            <input type="file" onChange={(e) => handleImageSelect(e, 'post')} className="hidden"/> 
+                            <ImagePlus size={20}/> 
+                            {post.image ? "Đổi ảnh khác" : "Chọn ảnh bìa"}
                         </label>
                     </div>
 
@@ -312,7 +321,7 @@ function DashboardContent() {
                   {postList.length === 0 && <div className="p-8 text-center text-slate-500">Chưa có bài viết nào.</div>}
                   {postList.map((item) => (
                     <div key={item.id} className="flex gap-4 p-4 border-b hover:bg-slate-50 items-start">
-                       <img src={item.image || "https://via.placeholder.com/150"} className="w-24 h-16 rounded object-cover bg-slate-100" />
+                       <img src={item.image || "https://via.placeholder.com/150?text=No+Image"} className="w-24 h-16 rounded object-cover bg-slate-100 border" />
                        <div className="flex-1">
                           <h3 className="font-bold text-slate-800 line-clamp-1">{item.title}</h3>
                           <p className="text-slate-500 text-sm line-clamp-1">{item.content}</p>
