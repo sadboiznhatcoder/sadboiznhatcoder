@@ -7,7 +7,7 @@ import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// === CẤU HÌNH SEO CHUẨN (ĐÃ GẮN MÃ GOOGLE CỦA BẠN) ===
+// === CẤU HÌNH SEO CHUẨN (ĐÃ GẮN MÃ GOOGLE MỚI CỦA BẠN) ===
 export const metadata: Metadata = {
   title: {
     template: "%s | N.A.T Automation",
@@ -31,9 +31,9 @@ export const metadata: Metadata = {
     locale: "vi_VN",
     type: "website",
   },
-  // ĐÂY LÀ MÃ CỦA BẠN ĐÃ ĐƯỢC GẮN VÀO 👇
+  // ĐÂY LÀ MÃ MỚI CỦA BẠN ĐÃ ĐƯỢC GẮN VÀO 👇
   verification: {
-    google: "Ef-jTLxiLZr-HAIJCDbYj3vfQTibjEYXh1uE93Rvkqo", 
+    google: "_AhE5pD_Tvu2x5r5IhcnsiUSCcnEHaeaw-4eWrmC_rw", 
   },
 };
 
