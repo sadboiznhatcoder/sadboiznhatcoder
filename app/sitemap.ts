@@ -1,38 +1,36 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://nat-automation.vercel.app' // Thay bằng domain thật của bạn
-
   return [
     {
-      url: baseUrl,
+      url: 'https://tailieucnc.xyz',
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1,
     },
     {
-      url: `${baseUrl}/mua-ban`,
+      url: 'https://tailieucnc.xyz/mua-ban',
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/linh-kien`,
+      url: 'https://tailieucnc.xyz/linh-kien',
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/sua-chua`,
+      url: 'https://tailieucnc.xyz/sua-chua',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.5,
     },
-     {
-      url: `${baseUrl}/bao-duong`,
+    {
+      url: 'https://tailieucnc.xyz/bao-duong',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.5,
-    },
+    }
   ]
 }
