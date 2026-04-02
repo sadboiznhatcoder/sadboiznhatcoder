@@ -1,48 +1,13 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Phone, MessageCircle, ArrowRight } from "lucide-react";
-import { supabase } from "../../utils/supabase";
+import { getPostBySlug, getPosts, generateSlug, type Post } from "../../utils/supabase";
 import { notFound } from "next/navigation";
 
-// Hàm tạo slug tự động từ title (dùng khi chưa có column slug)
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
-}
+// ============================================================
+// GENERATE METADATA: SEO tự động từ Supabase
+// ============================================================
 
-// === Fetch bài viết theo slug ===
-async function getPostBySlug(slug: string) {
-  // Thử tìm theo column slug trước (nếu có)
-  const { data: bySlug } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("slug", slug)
-    .single();
-
-  if (bySlug) return bySlug;
-
-  // Fallback: tìm theo title đã convert sang slug
-  const { data: allPosts } = await supabase
-    .from("posts")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (!allPosts) return null;
-
-  return allPosts.find(
-    (post) => (generateSlug(post.title) || `post-${post.id}`) === slug
-  ) || null;
-}
-
-// === GENERATE METADATA ĐỘNG ===
 export async function generateMetadata({
   params,
 }: {
@@ -54,59 +19,58 @@ export async function generateMetadata({
   if (!post) {
     return {
       title: "Không tìm thấy bài viết",
-      description: "Bài viết bạn tìm kiếm không tồn tại.",
+      description: "Bài viết bạn tìm kiếm không tồn tại hoặc đã bị xóa.",
     };
   }
 
-  // Tạo mô tả SEO từ nội dung bài viết (cắt 160 ký tự)
-  const seoDescription = post.content
-    ? post.content.substring(0, 160).trim() + "..."
-    : `Đọc bài viết "${post.title}" - Kiến thức kỹ thuật CNC từ N.A.T Automation. Sửa chữa máy CNC, bảo trì, linh kiện chính hãng.`;
-
-  // Tạo slug keyword tự nhiên
-  const titleKeywords = post.title
-    .toLowerCase()
-    .split(" ")
-    .filter((w: string) => w.length > 2);
+  // Ưu tiên meta_description đã nhập từ Admin, fallback sang content cắt 160 ký tự
+  const seoDescription =
+    post.meta_description ||
+    (post.content ? post.content.substring(0, 155).trim() + "..." : `${post.title} - Kiến thức kỹ thuật CNC từ N.A.T Automation.`);
 
   return {
-    title: post.title,
+    title: `${post.title} | N.A.T Automation`,
     description: seoDescription,
     keywords: [
-      ...titleKeywords,
+      post.category,
       "kiến thức cnc",
       "sửa chữa máy cnc",
+      "bảo trì cnc",
       "N.A.T Automation",
     ],
     alternates: {
-      canonical: `https://tailieucnc.xyz/kien-thuc/${slug}`,
+      canonical: `https://tailieucnc.xyz/kien-thuc/${post.slug}`,
     },
     openGraph: {
       title: `${post.title} | N.A.T Automation`,
       description: seoDescription,
-      url: `https://tailieucnc.xyz/kien-thuc/${slug}`,
+      url: `https://tailieucnc.xyz/kien-thuc/${post.slug}`,
       type: "article",
       publishedTime: post.created_at,
+      modifiedTime: post.updated_at,
       images: post.image
         ? [{ url: post.image, width: 1200, height: 630, alt: post.title }]
         : [{ url: "/og-image.png", width: 1200, height: 630, alt: "N.A.T Automation" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: post.title,
+      title: `${post.title} | N.A.T Automation`,
       description: seoDescription,
       images: post.image ? [post.image] : ["/og-image.png"],
     },
   };
 }
 
-// === JSON-LD Article Schema ===
-function ArticleSchema({ post, slug }: { post: any; slug: string }) {
+// ============================================================
+// JSON-LD Article Schema
+// ============================================================
+
+function ArticleSchema({ post }: { post: Post }) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
-    description: post.content?.substring(0, 160) || post.title,
+    description: post.meta_description || post.content?.substring(0, 160) || post.title,
     image: post.image || "https://tailieucnc.xyz/og-image.png",
     datePublished: post.created_at,
     dateModified: post.updated_at || post.created_at,
@@ -125,7 +89,7 @@ function ArticleSchema({ post, slug }: { post: any; slug: string }) {
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://tailieucnc.xyz/kien-thuc/${slug}`,
+      "@id": `https://tailieucnc.xyz/kien-thuc/${post.slug}`,
     },
   };
 
@@ -136,6 +100,33 @@ function ArticleSchema({ post, slug }: { post: any; slug: string }) {
     />
   );
 }
+
+// ============================================================
+// BreadcrumbSchema cho bài viết
+// ============================================================
+
+function BreadcrumbSchema({ post }: { post: Post }) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Trang chủ", item: "https://tailieucnc.xyz" },
+      { "@type": "ListItem", position: 2, name: "Kiến thức CNC", item: "https://tailieucnc.xyz/kien-thuc" },
+      { "@type": "ListItem", position: 3, name: post.title, item: `https://tailieucnc.xyz/kien-thuc/${post.slug}` },
+    ],
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+// ============================================================
+// PAGE COMPONENT: Chi tiết bài viết
+// ============================================================
 
 export default async function KienThucDetailPage({
   params,
@@ -149,17 +140,26 @@ export default async function KienThucDetailPage({
     notFound();
   }
 
-  // Fetch bài viết liên quan (3 bài gần nhất, không bao gồm bài hiện tại)
-  const { data: relatedPosts } = await supabase
-    .from("posts")
-    .select("id, title, image, created_at, slug")
-    .neq("id", post.id)
-    .order("created_at", { ascending: false })
-    .limit(3);
+  // Fetch 3 bài viết liên quan (cùng category, loại trừ bài hiện tại)
+  const allPosts = await getPosts();
+  const relatedPosts = allPosts
+    .filter((p) => p.id !== post.id)
+    .slice(0, 3);
+
+  // Xác định category label hiển thị
+  const categoryLabels: Record<string, string> = {
+    "kien-thuc": "Kiến thức CNC",
+    "sua-chua": "Sửa chữa",
+    "bao-tri": "Bảo trì",
+    "linh-kien": "Linh kiện",
+    "huong-dan": "Hướng dẫn",
+  };
+  const categoryLabel = categoryLabels[post.category] || post.category || "Kiến thức CNC";
 
   return (
     <main className="min-h-screen bg-slate-50 font-sans">
-      <ArticleSchema post={post} slug={slug} />
+      <ArticleSchema post={post} />
+      <BreadcrumbSchema post={post} />
 
       {/* Header */}
       <header className="bg-sky-700 text-white p-4 sticky top-0 z-40 shadow-md flex items-center gap-3">
@@ -173,6 +173,15 @@ export default async function KienThucDetailPage({
 
       <div className="container mx-auto p-4 md:p-8 max-w-4xl">
         <article itemScope itemType="https://schema.org/Article">
+          {/* Breadcrumb UI */}
+          <nav aria-label="Breadcrumb" className="text-sm text-slate-400 mb-6 flex items-center gap-2">
+            <Link href="/" className="hover:text-sky-600 transition">Trang chủ</Link>
+            <span>/</span>
+            <Link href="/kien-thuc" className="hover:text-sky-600 transition">Kiến thức</Link>
+            <span>/</span>
+            <span className="text-slate-600 font-medium truncate max-w-[200px]">{post.title}</span>
+          </nav>
+
           {/* Ảnh bìa */}
           {post.image && (
             <figure className="rounded-2xl overflow-hidden shadow-xl mb-8 border-4 border-white">
@@ -186,7 +195,7 @@ export default async function KienThucDetailPage({
           )}
 
           {/* Meta thông tin */}
-          <div className="flex items-center gap-3 text-slate-400 text-sm mb-4">
+          <div className="flex flex-wrap items-center gap-3 text-slate-400 text-sm mb-4">
             <Calendar size={14} />
             <time dateTime={post.created_at} itemProp="datePublished">
               {new Date(post.created_at).toLocaleDateString("vi-VN", {
@@ -196,11 +205,11 @@ export default async function KienThucDetailPage({
               })}
             </time>
             <span className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full text-xs font-bold">
-              Kiến thức CNC
+              {categoryLabel}
             </span>
           </div>
 
-          {/* Tiêu đề */}
+          {/* Tiêu đề bài viết (H2 vì H1 đã dùng ở header) */}
           <h2
             className="text-2xl md:text-4xl font-black text-slate-800 leading-tight mb-6"
             itemProp="headline"
@@ -246,45 +255,36 @@ export default async function KienThucDetailPage({
         </article>
 
         {/* Bài viết liên quan */}
-        {relatedPosts && relatedPosts.length > 0 && (
+        {relatedPosts.length > 0 && (
           <section className="mt-16">
             <h3 className="text-2xl font-bold text-slate-800 mb-6 uppercase">
               Bài viết liên quan
             </h3>
             <div className="grid md:grid-cols-3 gap-6">
-              {relatedPosts.map((related) => {
-                const relSlug =
-                  related.slug ||
-                  generateSlug(related.title) ||
-                  `post-${related.id}`;
-                return (
-                  <Link
-                    key={related.id}
-                    href={`/kien-thuc/${relSlug}`}
-                    className="bg-white rounded-xl overflow-hidden shadow-sm border hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
-                  >
-                    <div className="aspect-video bg-slate-100 overflow-hidden">
-                      <img
-                        src={
-                          related.image ||
-                          "https://via.placeholder.com/400x200?text=CNC"
-                        }
-                        alt={`Bài liên quan: ${related.title}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h4 className="font-bold text-slate-800 text-sm line-clamp-2 group-hover:text-sky-700 transition-colors">
-                        {related.title}
-                      </h4>
-                      <span className="inline-flex items-center gap-1 text-sky-600 text-xs font-bold mt-2">
-                        Đọc tiếp <ArrowRight size={12} />
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
+              {relatedPosts.map((related) => (
+                <Link
+                  key={related.id}
+                  href={`/kien-thuc/${related.slug}`}
+                  className="bg-white rounded-xl overflow-hidden shadow-sm border hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
+                >
+                  <div className="aspect-video bg-slate-100 overflow-hidden">
+                    <img
+                      src={related.image || "https://via.placeholder.com/400x200?text=CNC"}
+                      alt={`Bài liên quan: ${related.title}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-bold text-slate-800 text-sm line-clamp-2 group-hover:text-sky-700 transition-colors">
+                      {related.title}
+                    </h4>
+                    <span className="inline-flex items-center gap-1 text-sky-600 text-xs font-bold mt-2">
+                      Đọc tiếp <ArrowRight size={12} />
+                    </span>
+                  </div>
+                </Link>
+              ))}
             </div>
           </section>
         )}
