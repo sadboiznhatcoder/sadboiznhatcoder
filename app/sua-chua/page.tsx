@@ -36,16 +36,16 @@ export default function SuaChuaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <main className="min-h-screen bg-slate-50 font-sans">
       {/* Header */}
-      <div className="bg-orange-600 text-white p-4 sticky top-0 z-40 shadow-md flex items-center gap-3">
-        <Link href="/"><ArrowLeft size={24} /></Link>
+      <header className="bg-orange-600 text-white p-4 sticky top-0 z-40 shadow-md flex items-center gap-3">
+        <Link href="/" aria-label="Quay lại trang chủ"><ArrowLeft size={24} /></Link>
         <h1 className="font-bold text-lg uppercase truncate">Dịch Vụ Sửa Chữa Máy CNC</h1>
-      </div>
+      </header>
 
       <div className="container mx-auto p-4 md:p-8 max-w-4xl">
         
-        <div className="grid md:grid-cols-2 gap-8">
+        <section className="grid md:grid-cols-2 gap-8">
           
           {/* CỘT TRÁI: GIỚI THIỆU */}
           <div className="space-y-6">
@@ -132,8 +132,8 @@ export default function SuaChuaPage() {
             )}
           </div>
 
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

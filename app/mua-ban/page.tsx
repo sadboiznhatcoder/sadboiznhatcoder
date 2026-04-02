@@ -71,15 +71,15 @@ export default function MuaBanPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 pb-10">
+    <main className="min-h-screen bg-slate-100 pb-10">
       {/* HEADER */}
-      <div className="bg-sky-700 text-white p-4 sticky top-0 z-40 shadow-md flex items-center justify-between">
+      <header className="bg-sky-700 text-white p-4 sticky top-0 z-40 shadow-md flex items-center justify-between">
         <div className="flex items-center gap-3">
-            <Link href="/"><ArrowLeft size={24} /></Link>
+            <Link href="/" aria-label="Quay lại trang chủ"><ArrowLeft size={24} /></Link>
             <h1 className="font-bold text-lg uppercase truncate">Mua Bán Máy Móc</h1>
         </div>
         {isAdmin && <span className="bg-red-500 text-white text-xs px-2 py-1 rounded font-bold animate-pulse">ADMIN MODE</span>}
-      </div>
+      </header>
 
       {/* CONTENT */}
       <div className="container mx-auto p-2 md:p-6 max-w-6xl">
@@ -109,7 +109,7 @@ export default function MuaBanPage() {
                   )}
 
                   <div className="aspect-square bg-slate-100 relative overflow-hidden">
-                    <img src={firstImg} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={firstImg} alt={`Máy CNC: ${item.name} - mua bán máy CNC chính hãng`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                   </div>
                   <div className="p-3">
                     <h3 className="text-sm font-semibold text-slate-800 line-clamp-2 min-h-[2.5em] mb-1 group-hover:text-sky-700 transition-colors">{item.name}</h3>
@@ -126,19 +126,19 @@ export default function MuaBanPage() {
       {selectedProduct && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-2 md:p-10 animate-in fade-in duration-200" onClick={() => setSelectedProduct(null)}>
           <div className="bg-white rounded-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row relative shadow-2xl" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setSelectedProduct(null)} className="absolute top-2 right-2 z-10 bg-slate-100 p-2 rounded-full hover:bg-red-500 hover:text-white transition"><X size={20} /></button>
+            <button onClick={() => setSelectedProduct(null)} className="absolute top-2 right-2 z-10 bg-slate-100 p-2 rounded-full hover:bg-red-500 hover:text-white transition" aria-label="Đóng chi tiết"><X size={20} /></button>
             
             {/* Cột Trái: Ảnh */}
             <div className="w-full md:w-3/5 bg-black flex flex-col justify-center relative group">
               <div className="h-[300px] md:h-[500px] w-full flex items-center justify-center">
-                 <img src={activeImage || "https://via.placeholder.com/500?text=No+Image"} className="max-w-full max-h-full object-contain" />
+                  <img src={activeImage || "https://via.placeholder.com/500?text=No+Image"} alt={`Chi tiết sản phẩm: ${selectedProduct.name}`} className="max-w-full max-h-full object-contain" />
               </div>
               {/* List ảnh nhỏ */}
               {selectedProduct.images && selectedProduct.images.length > 0 && (
                   <div className="bg-black/60 p-4 flex gap-3 overflow-x-auto justify-center backdrop-blur-sm absolute bottom-0 w-full">
                     {selectedProduct.images.map((img: string, idx: number) => (
                         <button key={idx} onClick={() => setActiveImage(img)} className={`w-16 h-16 border-2 rounded-lg overflow-hidden flex-shrink-0 transition-all ${activeImage === img ? 'border-sky-500 scale-110' : 'border-slate-600 opacity-60 hover:opacity-100'}`}>
-                            <img src={img} className="w-full h-full object-cover" />
+                            <img src={img} alt={`Ảnh sản phẩm ${idx + 1}`} className="w-full h-full object-cover" />
                         </button>
                     ))}
                   </div>
@@ -176,6 +176,6 @@ export default function MuaBanPage() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }

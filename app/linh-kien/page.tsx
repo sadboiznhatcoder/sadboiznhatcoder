@@ -69,15 +69,15 @@ export default function LinhKienPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 pb-10">
+    <main className="min-h-screen bg-slate-100 pb-10">
       {/* Header Mobile - Màu Tím */}
-      <div className="bg-purple-700 text-white p-4 sticky top-0 z-40 shadow-md flex items-center justify-between">
+      <header className="bg-purple-700 text-white p-4 sticky top-0 z-40 shadow-md flex items-center justify-between">
         <div className="flex items-center gap-3">
-            <Link href="/"><ArrowLeft size={24} /></Link>
+            <Link href="/" aria-label="Quay lại trang chủ"><ArrowLeft size={24} /></Link>
             <h1 className="font-bold text-lg uppercase truncate">Linh Kiện & Phụ Tùng</h1>
         </div>
         {isAdmin && <span className="bg-white text-purple-700 text-xs px-2 py-1 rounded font-bold animate-pulse">ADMIN MODE</span>}
-      </div>
+      </header>
 
       <div className="container mx-auto p-2 md:p-6 max-w-6xl">
         
@@ -109,7 +109,7 @@ export default function LinhKienPage() {
                   )}
 
                   <div className="aspect-square bg-slate-200 relative overflow-hidden">
-                    <img src={firstImg} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={firstImg} alt={`Linh kiện CNC: ${item.name} - servo, driver, spindle chính hãng`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                     
                     {/* Nhãn chính hãng */}
                     <span className="absolute top-1 left-1 bg-purple-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
@@ -137,7 +137,7 @@ export default function LinhKienPage() {
             {/* CỘT ẢNH */}
             <div className="w-full md:w-3/5 bg-black flex flex-col justify-center relative">
               <div className="h-[300px] md:h-[500px] w-full flex items-center justify-center">
-                  <img src={activeImage || "https://via.placeholder.com/500?text=No+Image"} className="max-w-full max-h-full object-contain" />
+                  <img src={activeImage || "https://via.placeholder.com/500?text=No+Image"} alt={`Chi tiết linh kiện: ${selectedProduct.name}`} className="max-w-full max-h-full object-contain" />
               </div>
               
               {/* List ảnh nhỏ */}
@@ -179,6 +179,6 @@ export default function LinhKienPage() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }

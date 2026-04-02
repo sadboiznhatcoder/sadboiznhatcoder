@@ -140,8 +140,9 @@ export default function Home() {
                      <div className="relative rounded-2xl overflow-hidden shadow-xl border-4 border-white group">
                         <img 
                           src={post.image || "https://via.placeholder.com/600x400"} 
-                          alt={post.title} 
-                          className="w-full h-64 md:h-80 object-cover group-hover:scale-105 transition duration-700" 
+                          alt={`${post.title} - sửa chữa bảo trì máy CNC tại N.A.T Automation`} 
+                          className="w-full h-64 md:h-80 object-cover group-hover:scale-105 transition duration-700"
+                          loading="lazy"
                         />
                         <div className="absolute top-4 left-4 bg-yellow-400 text-slate-900 font-bold text-xs px-3 py-1 rounded shadow">
                           MỚI NHẤT
@@ -217,8 +218,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* FOOTER (Giữ nguyên) */}
-        <footer className="mt-16 bg-slate-900 text-white rounded-t-3xl p-8 md:p-12">
+        {/* FOOTER (Semantic) */}
+        <footer className="mt-16 bg-slate-900 text-white rounded-t-3xl p-8 md:p-12" role="contentinfo">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="text-2xl font-bold mb-4 uppercase text-yellow-400">Liên Hệ Với Chúng Tôi</h3>
@@ -236,7 +237,7 @@ export default function Home() {
             </div>
           </div>
           <div className="text-center text-slate-600 text-xs mt-10 border-t border-slate-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>© 2026 CÔNG TY TNHH TỰ ĐỘNG HÓA N.A.T. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} CÔNG TY TNHH TỰ ĐỘNG HÓA N.A.T. All rights reserved.</p>
             <Link href="/admin" className="flex items-center gap-1 hover:text-slate-400 transition"><Lock size={12}/> Quản trị viên</Link>
           </div>
         </footer>
