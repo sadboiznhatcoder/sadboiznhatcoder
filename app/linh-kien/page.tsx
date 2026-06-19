@@ -2,9 +2,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Phone, X, Pencil, Trash2, CircuitBoard, Loader2 } from "lucide-react";
-import { checkAuth } from "../utils/auth"; // Hàm kiểm tra đăng nhập
-import { supabase } from "../utils/supabase"; // Import kết nối Database
+import { ArrowLeft, Phone, X, Pencil, Trash2, CircuitBoard, Loader2, ShoppingCart, Check } from "lucide-react";
+import { checkAuth } from "../utils/auth";
+import { supabase } from "../utils/supabase";
+import { useCart, parsePriceString } from "../utils/CartContext";
 
 export default function LinhKienPage() {
   const router = useRouter();
@@ -12,7 +13,29 @@ export default function LinhKienPage() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [activeImage, setActiveImage] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Trạng thái đang tải
+  const [isLoading, setIsLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState("");
+  const { addToCart } = useCart();
+
+  // Toast notification
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 2500);
+  };
+
+  // Thêm sản phẩm vào giỏ hàng
+  const handleAddToCart = (product: any) => {
+    const numericPrice = parsePriceString(product.price || "");
+    if (!numericPrice) return;
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: numericPrice,
+      priceLabel: product.price,
+      image: product.images?.[0] || "",
+    });
+    showToast(`Đã thêm "${product.name}" vào giỏ hàng!`);
+  };
 
   useEffect(() => {
     // 1. Kiểm tra Admin (ở client)
@@ -169,7 +192,17 @@ export default function LinhKienPage() {
                   </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t sticky bottom-0 bg-white">
+              <div className="mt-6 pt-4 border-t sticky bottom-0 bg-white space-y-2">
+                {/* Nút thêm vào giỏ - chỉ hiện khi có giá */}
+                {parsePriceString(selectedProduct.price || "") && (
+                  <button
+                    onClick={() => { handleAddToCart(selectedProduct); }}
+                    className="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 cursor-pointer"
+                  >
+                    <ShoppingCart size={20} />
+                    <span>THÊM VÀO GIỎ HÀNG</span>
+                  </button>
+                )}
                 <a href="tel:0912258461" className="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition flex items-center justify-center gap-2 shadow-lg shadow-purple-200 group">
                     <Phone size={20} className="group-hover:animate-bounce"/> 
                     <span>LIÊN HỆ: 0912.258.461</span>
@@ -177,6 +210,14 @@ export default function LinhKienPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast notification */}
+      {toastMessage && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom duration-300">
+          <Check size={18} className="flex-shrink-0" />
+          <span className="text-sm font-medium">{toastMessage}</span>
         </div>
       )}
     </main>

@@ -5,6 +5,8 @@ import { Phone } from "lucide-react";
 import ChatWidgetLoader from "./ChatWidgetLoader";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react";
+import { CartProvider } from "./utils/CartContext";
+import CartFloatingButton from "./components/CartFloatingButton";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -269,7 +271,10 @@ export default function RootLayout({
           </div>
         </nav>
 
-        <div className="pt-16 pb-10">{children}</div>
+        <CartProvider>
+          <div className="pt-16 pb-10">{children}</div>
+          <CartFloatingButton />
+        </CartProvider>
 
         <ChatWidgetLoader />
         <Analytics />
