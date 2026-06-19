@@ -277,6 +277,37 @@ export default function RootLayout({
         </CartProvider>
 
         <ChatWidgetLoader />
+
+        {/* === TAWK.TO LIVE CHAT (Người thật) === */}
+        {/* Đổi INSERT_TAWKTO_PROPERTY_ID_HERE thành Property ID thật từ dashboard Tawk.to */}
+        <Script id="tawk-to" strategy="afterInteractive">
+          {`
+            var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+            (function(){
+              var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+              s1.async = true;
+              s1.src = 'https://embed.tawk.to/INSERT_TAWKTO_PROPERTY_ID_HERE/default';
+              s1.charset = 'UTF-8';
+              s1.setAttribute('crossorigin','*');
+              s0.parentNode.insertBefore(s1, s0);
+            })();
+          `}
+        </Script>
+
+        {/* CSS: Đẩy Tawk.to widget sang góc dưới bên TRÁI */}
+        <style>{`
+          iframe[title="chat widget"],
+          .tawk-min-container,
+          #tawk-bubble-container {
+            left: 16px !important;
+            right: auto !important;
+          }
+          .tawk-min-chat {
+            left: 16px !important;
+            right: auto !important;
+          }
+        `}</style>
+
         <Analytics />
       </body>
     </html>
