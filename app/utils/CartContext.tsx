@@ -26,25 +26,38 @@ interface CartContextType {
 }
 
 // ============================================================
-// Helper: Parse giá tiền tiếng Việt → number
-// "2.500.000đ" → 2500000
-// "1,500,000 VNĐ" → 1500000
+// Helper: Parse giá tiền tiếng Việt → number (ULTIMATE VERSION)
+// Xử lý tất cả format: "1.500k", "2tr", "1.500.000đ", "1,500,000 VNĐ"
 // "Liên hệ" → null
 // ============================================================
 
-export function parsePriceString(price: string): number | null {
-  if (!price) return null;
+export function parseVietnamesePrice(priceInput: string | number | null | undefined): number | null {
+  if (priceInput === null || priceInput === undefined) return null;
+  if (typeof priceInput === "number") return priceInput > 0 ? Math.round(priceInput) : null;
 
-  // Xóa ký tự không phải số và dấu chấm/phẩy
-  const cleaned = price.replace(/[^\d.,]/g, "");
-  if (!cleaned) return null;
+  const raw = String(priceInput).toLowerCase().trim();
+  if (!raw) return null;
 
-  // Xóa dấu chấm phân cách hàng nghìn và chuyển dấu phẩy thập phân (nếu có)
-  const normalized = cleaned.replace(/\./g, "").replace(/,/g, ".");
-  const result = parseFloat(normalized);
+  // Bước 1: Xác định hệ số nhân TRƯỚC KHI xóa chữ cái
+  let multiplier = 1;
+  if (/tr/i.test(raw)) {
+    multiplier = 1_000_000;
+  } else if (/k/i.test(raw)) {
+    multiplier = 1_000;
+  }
+
+  // Bước 2: Xóa TOÀN BỘ ký tự không phải số
+  const digitsOnly = raw.replace(/[^\d]/g, "");
+  if (!digitsOnly) return null;
+
+  // Bước 3: Parse thành integer và nhân hệ số
+  const result = parseInt(digitsOnly, 10) * multiplier;
 
   return isNaN(result) || result <= 0 ? null : result;
 }
+
+// Backward-compatible alias
+export const parsePriceString = parseVietnamesePrice;
 
 // ============================================================
 // Helper: Bỏ dấu tiếng Việt

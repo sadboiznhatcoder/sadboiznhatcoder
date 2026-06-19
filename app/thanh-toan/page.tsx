@@ -172,11 +172,16 @@ export default function ThanhToanPage() {
 
     setIsSubmitting(true);
 
-    try {
-      const totalAmount = getTotal();
-      const transferContent = generateTransferContent(formData.customerName, formData.phone);
+    // Tính toán trước — đảm bảo totalAmount là số nguyên (integer)
+    const totalAmount = Math.round(getTotal());
+    const transferContent = generateTransferContent(formData.customerName, formData.phone);
+    let dbSaveError = "";
 
-      // Insert into Supabase
+    // =====================================================
+    // Ghi DB Supabase (Graceful Degradation)
+    // Nếu DB lỗi → vẫn cho hiển thị QR để khách thanh toán
+    // =====================================================
+    try {
       const { error } = await supabase.from("orders").insert([
         {
           customer_name: formData.customerName.trim(),
@@ -198,17 +203,21 @@ export default function ThanhToanPage() {
       ]);
 
       if (error) {
-        throw new Error(error.message);
+        console.warn("[Supabase] Lưu đơn hàng thất bại:", error.message);
+        dbSaveError = error.message;
       }
-
-      // Success
-      setOrderResult({ transferContent, totalAmount });
-      clearCart();
     } catch (err: any) {
-      setSubmitError(err.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
-    } finally {
-      setIsSubmitting(false);
+      console.warn("[Supabase] Exception khi lưu đơn hàng:", err?.message);
+      dbSaveError = err?.message || "Lỗi kết nối database";
     }
+
+    // LUÔN chuyển sang màn hình thành công + QR (dù DB lỗi)
+    setOrderResult({ transferContent, totalAmount });
+    if (dbSaveError) {
+      setSubmitError(`⚠️ Đơn hàng chưa lưu được vào hệ thống (${dbSaveError}). Vui lòng liên hệ Hotline 0912.258.461 sau khi chuyển khoản.`);
+    }
+    clearCart();
+    setIsSubmitting(false);
   };
 
   // Loading state
@@ -224,7 +233,9 @@ export default function ThanhToanPage() {
   // SUCCESS SCREEN
   // ========================
   if (orderResult) {
-    const vietQRUrl = `https://img.vietqr.io/image/MB-86886688686686-compact2.png?amount=${orderResult.totalAmount}&addInfo=${encodeURIComponent(orderResult.transferContent)}&accountName=${encodeURIComponent("N.A.T AUTOMATION")}`;
+    // Ép amount thành integer chuẩn — KHÔNG có dấu chấm thập phân trong URL
+    const safeAmount = Math.round(orderResult.totalAmount);
+    const vietQRUrl = `https://img.vietqr.io/image/MB-86886688686686-compact2.png?amount=${safeAmount}&addInfo=${encodeURIComponent(orderResult.transferContent)}&accountName=${encodeURIComponent("N.A.T AUTOMATION")}`;
 
     return (
       <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900">
@@ -331,6 +342,16 @@ export default function ThanhToanPage() {
               </div>
             </div>
           </div>
+
+          {/* DB Warning (nếu lưu DB thất bại) */}
+          {submitError && (
+            <div className="bg-red-500/15 border border-red-500/40 rounded-xl p-4 mb-4">
+              <p className="text-red-300 text-sm text-center">
+                <AlertCircle size={16} className="inline mr-1 -mt-0.5" />
+                {submitError}
+              </p>
+            </div>
+          )}
 
           {/* Note */}
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
