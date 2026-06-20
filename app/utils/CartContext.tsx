@@ -26,8 +26,10 @@ interface CartContextType {
 }
 
 // ============================================================
-// Helper: Parse giá tiền tiếng Việt → number (ULTIMATE VERSION)
-// Xử lý tất cả format: "1.500k", "2tr", "1.500.000đ", "1,500,000 VNĐ"
+// Helper: Parse giá tiền tiếng Việt → number (AUTO-SCALING)
+// Xử lý mọi format: "1.500k", "2tr", "1.500.000đ", "1,500,000 VNĐ"
+// AUTO-SCALE: Giá < 100.000 mà không có suffix → tự nhân 1000
+// (Linh kiện CNC không bao giờ có giá vài nghìn đồng)
 // "Liên hệ" → null
 // ============================================================
 
@@ -40,10 +42,13 @@ export function parseVietnamesePrice(priceInput: string | number | null | undefi
 
   // Bước 1: Xác định hệ số nhân TRƯỚC KHI xóa chữ cái
   let multiplier = 1;
+  let hasExplicitSuffix = false;
   if (/tr/i.test(raw)) {
     multiplier = 1_000_000;
+    hasExplicitSuffix = true;
   } else if (/k/i.test(raw)) {
     multiplier = 1_000;
+    hasExplicitSuffix = true;
   }
 
   // Bước 2: Xóa TOÀN BỘ ký tự không phải số
@@ -51,7 +56,15 @@ export function parseVietnamesePrice(priceInput: string | number | null | undefi
   if (!digitsOnly) return null;
 
   // Bước 3: Parse thành integer và nhân hệ số
-  const result = parseInt(digitsOnly, 10) * multiplier;
+  let result = parseInt(digitsOnly, 10) * multiplier;
+
+  // Bước 4: AUTO-SCALING (Domain Logic)
+  // Linh kiện CNC không có giá dưới 100.000đ
+  // Nếu không có suffix k/tr và kết quả < 100.000 → tự nhân 1000
+  // VD: "1.500" → digits "1500" → 1500 < 100000 → 1500 * 1000 = 1.500.000
+  if (!hasExplicitSuffix && result > 0 && result < 100_000) {
+    result = result * 1_000;
+  }
 
   return isNaN(result) || result <= 0 ? null : result;
 }
