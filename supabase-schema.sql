@@ -1,16 +1,13 @@
 -- ============================================================
 -- SQL SCRIPT: Tạo bảng posts chuẩn SEO cho N.A.T Automation
 -- Chạy trên Supabase SQL Editor (https://app.supabase.com)
+-- Idempotent script: Safe to run multiple times
 -- ============================================================
 
--- Bước 1: Xóa bảng posts cũ (nếu có) và tạo mới với đầy đủ cột SEO
--- ⚠️ CẢNH BÁO: Lệnh này sẽ XÓA toàn bộ dữ liệu bài viết cũ.
--- Nếu muốn giữ dữ liệu cũ, hãy dùng ALTER TABLE ở Bước 1b thay thế.
-
--- === CHỌN 1 TRONG 2 PHƯƠNG ÁN DƯỚI ĐÂY ===
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ╔══════════════════════════════════════════════════════════╗
--- ║ PHƯƠNG ÁN A: TẠO MỚI TỪ ĐẦU (Nếu chưa có dữ liệu)  ║
+-- ║ PHƯƠNG ÁN A: TẠO MỚI TỪ ĐẦU (Nếu chưa có dữ liệu)        ║
 -- ╚══════════════════════════════════════════════════════════╝
 
 CREATE TABLE IF NOT EXISTS posts (
@@ -25,42 +22,81 @@ CREATE TABLE IF NOT EXISTS posts (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tạo index để tìm kiếm nhanh theo slug
-CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug);
--- Tạo index để sắp xếp theo ngày
+-- Index sắp xếp và lọc (Cột slug UNIQUE đã tự động có UNIQUE index trong Postgres)
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
--- Tạo index để lọc theo category
 CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category);
 
--- Bật RLS (Row Level Security) - Cho phép đọc public
+-- Trigger tự động cập nhật updated_at
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS set_posts_updated_at ON posts;
+CREATE TRIGGER set_posts_updated_at
+  BEFORE UPDATE ON posts
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+-- Bật Row Level Security (RLS)
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 
--- Policy: Cho phép tất cả mọi người đọc
+-- Dọn sạch policies cũ nếu có
+DROP POLICY IF EXISTS "Allow public read" ON posts;
+DROP POLICY IF EXISTS "Allow all write" ON posts;
+DROP POLICY IF EXISTS "authenticated_insert_posts" ON posts;
+DROP POLICY IF EXISTS "service_role_insert_posts" ON posts;
+DROP POLICY IF EXISTS "authenticated_update_posts" ON posts;
+DROP POLICY IF EXISTS "service_role_update_posts" ON posts;
+DROP POLICY IF EXISTS "authenticated_delete_posts" ON posts;
+DROP POLICY IF EXISTS "service_role_delete_posts" ON posts;
+
+-- Policy 1: Mọi người (public + bot SEO) đều được phép đọc bài viết
 CREATE POLICY "Allow public read" ON posts
-  FOR SELECT USING (true);
+  FOR SELECT
+  USING (true);
 
--- Policy: Cho phép insert/update/delete (cho authenticated hoặc anon key)
-CREATE POLICY "Allow all write" ON posts
-  FOR ALL USING (true) WITH CHECK (true);
+-- Policy 2: Chỉ tài khoản authenticated (Admin) hoặc service_role mới được thêm/sửa/xóa bài viết
+CREATE POLICY "authenticated_insert_posts" ON posts
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
 
+CREATE POLICY "service_role_insert_posts" ON posts
+  FOR INSERT
+  TO service_role
+  WITH CHECK (true);
+
+CREATE POLICY "authenticated_update_posts" ON posts
+  FOR UPDATE
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "service_role_update_posts" ON posts
+  FOR UPDATE
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "authenticated_delete_posts" ON posts
+  FOR DELETE
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "service_role_delete_posts" ON posts
+  FOR DELETE
+  TO service_role
+  USING (true);
 
 -- ╔══════════════════════════════════════════════════════════╗
--- ║ PHƯƠNG ÁN B: GIỮ DỮ LIỆU CŨ (Nếu đã có bài viết)    ║
--- ║ Chỉ chạy các lệnh ALTER bên dưới thay cho Phương Án A  ║
+-- ║ PHƯƠNG ÁN B: GIỮ DỮ LIỆU CŨ (Nếu đã có bài viết)         ║
+-- ║ Chỉ chạy các lệnh ALTER bên dưới thay cho Phương Án A    ║
 -- ╚══════════════════════════════════════════════════════════╝
-
 -- ALTER TABLE posts ADD COLUMN IF NOT EXISTS slug TEXT UNIQUE;
 -- ALTER TABLE posts ADD COLUMN IF NOT EXISTS meta_description TEXT DEFAULT '';
 -- ALTER TABLE posts ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'kien-thuc';
 -- ALTER TABLE posts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
--- 
--- Sau đó cập nhật slug cho các bài viết cũ (chạy riêng):
--- UPDATE posts SET slug = lower(
---   regexp_replace(
---     regexp_replace(
---       regexp_replace(title, '[^a-zA-Z0-9\s-]', '', 'g'),
---       '\s+', '-', 'g'
---     ),
---     '-+', '-', 'g'
---   )
--- ) WHERE slug IS NULL;

@@ -35,38 +35,51 @@ interface CartContextType {
 
 export function parseVietnamesePrice(priceInput: string | number | null | undefined): number | null {
   if (priceInput === null || priceInput === undefined) return null;
-  if (typeof priceInput === "number") return priceInput > 0 ? Math.round(priceInput) : null;
 
-  const raw = String(priceInput).toLowerCase().trim();
-  if (!raw) return null;
-
-  // Bước 1: Xác định hệ số nhân TRƯỚC KHI xóa chữ cái
-  let multiplier = 1;
-  let hasExplicitSuffix = false;
-  if (/tr/i.test(raw)) {
-    multiplier = 1_000_000;
-    hasExplicitSuffix = true;
-  } else if (/k/i.test(raw)) {
-    multiplier = 1_000;
-    hasExplicitSuffix = true;
+  if (typeof priceInput === "number") {
+    if (isNaN(priceInput) || priceInput <= 0) return null;
+    let rounded = Math.round(priceInput);
+    // Domain rule: Linh kiện máy CNC luôn có giá trị >= 100.000đ.
+    // Nếu giá dạng rút gọn < 100.000 (VD: 1500 = 1.500k), tự nhân 1.000
+    if (rounded < 100_000) {
+      rounded *= 1_000;
+    }
+    return rounded;
   }
 
-  // Bước 2: Xóa TOÀN BỘ ký tự không phải số
+  const raw = String(priceInput).toLowerCase().trim();
+  if (!raw || raw.includes("liên hệ") || raw.includes("lien he")) return null;
+
+  // Xử lý các format chứa số thập phân như "1.5tr", "1,5tr", "1.5 triệu", "1.5k"
+  const trMatch = raw.match(/^([0-9]+(?:[.,][0-9]+)?)\s*(?:tr|triệu|trieu)/i);
+  if (trMatch) {
+    const num = parseFloat(trMatch[1].replace(",", "."));
+    if (!isNaN(num) && num > 0) return Math.round(num * 1_000_000);
+  }
+
+  const kMatch = raw.match(/^([0-9]+(?:[.,][0-9]+)?)\s*k/i);
+  if (kMatch) {
+    const num = parseFloat(kMatch[1].replace(",", "."));
+    if (!isNaN(num) && num > 0) {
+      const res = Math.round(num * 1_000);
+      return res < 100_000 ? res * 1_000 : res;
+    }
+  }
+
+  // Loại bỏ các ký tự tiền tệ, giữ lại số
+  // Ví dụ: "1.500.000đ", "1.500.000 đ", "1,500,000", "1.500đ", "1500"
   const digitsOnly = raw.replace(/[^\d]/g, "");
   if (!digitsOnly) return null;
 
-  // Bước 3: Parse thành integer và nhân hệ số
-  let result = parseInt(digitsOnly, 10) * multiplier;
+  let result = parseInt(digitsOnly, 10);
+  if (isNaN(result) || result <= 0) return null;
 
-  // Bước 4: AUTO-SCALING (Domain Logic)
-  // Linh kiện CNC không có giá dưới 100.000đ
-  // Nếu không có suffix k/tr và kết quả < 100.000 → tự nhân 1000
-  // VD: "1.500" → digits "1500" → 1500 < 100000 → 1500 * 1000 = 1.500.000
-  if (!hasExplicitSuffix && result > 0 && result < 100_000) {
-    result = result * 1_000;
+  // Auto-scaling: Giá < 100.000đ (như "1.500" hay "1500") thì quy chuẩn về 1.500.000đ
+  if (result < 100_000) {
+    result *= 1_000;
   }
 
-  return isNaN(result) || result <= 0 ? null : result;
+  return result;
 }
 
 // Backward-compatible alias

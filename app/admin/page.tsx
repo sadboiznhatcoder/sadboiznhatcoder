@@ -16,14 +16,23 @@ export default function AdminLogin() {
     setError("");
     setLoading(true);
 
-    // Giả lập độ trễ mạng nhẹ để tạo cảm giác xử lý
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
+      });
+      const data = await res.json();
 
-    if (username === "admin" && password === "66771508") {
-      loginAdmin(); // Gọi hàm lưu cookie
-      router.push("/admin/dashboard");
-    } else {
-      setError("Sai tên đăng nhập hoặc mật khẩu!");
+      if (res.ok && data.success) {
+        loginAdmin();
+        router.push("/admin/dashboard");
+      } else {
+        setError(data.error || "Sai tên đăng nhập hoặc mật khẩu!");
+        setLoading(false);
+      }
+    } catch {
+      setError("Lỗi kết nối máy chủ. Vui lòng thử lại!");
       setLoading(false);
     }
   };

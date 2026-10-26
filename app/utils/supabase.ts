@@ -176,3 +176,33 @@ export async function getPostSlugs(): Promise<
 
   return (data as { slug: string; updated_at: string }[]) || [];
 }
+
+// ============================================================
+// Tóm tắt bài viết (KHÔNG kéo cột content nặng nề)
+// Dùng cho trang listing /kien-thuc
+// ============================================================
+
+export interface PostSummary {
+  id: string;
+  title: string;
+  slug: string;
+  meta_description: string;
+  category: string;
+  image: string;
+  created_at: string;
+}
+
+/** Lấy danh sách bài viết TÓM TẮT (không kéo content) */
+export async function getPostsSummary(): Promise<PostSummary[]> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, title, slug, meta_description, category, image, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("getPostsSummary error:", error.message);
+    return [];
+  }
+
+  return (data as PostSummary[]) || [];
+}

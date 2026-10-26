@@ -17,6 +17,8 @@ export const logoutAdmin = () => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("isLoggedIn");
   }
+  // Call server logout to clear httpOnly cookie
+  fetch("/api/admin/logout", { method: "POST" }).catch(() => {});
 };
 
 // Hàm kiểm tra trạng thái đăng nhập

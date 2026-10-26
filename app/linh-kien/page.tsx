@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Phone, X, Pencil, Trash2, CircuitBoard, Loader2, ShoppingCart, Check } from "lucide-react";
 import { checkAuth } from "../utils/auth";
 import { supabase } from "../utils/supabase";
-import { useCart, parsePriceString } from "../utils/CartContext";
+import { useCart, parsePriceString, formatCurrency } from "../utils/CartContext";
 
 export default function LinhKienPage() {
   const router = useRouter();
@@ -31,7 +31,7 @@ export default function LinhKienPage() {
       id: product.id,
       name: product.name,
       price: numericPrice,
-      priceLabel: product.price,
+      priceLabel: formatCurrency(numericPrice),
       image: product.images?.[0] || "",
     });
     showToast(`Đã thêm "${product.name}" vào giỏ hàng!`);
@@ -119,6 +119,8 @@ export default function LinhKienPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
             {products.map((item) => {
               const firstImg = item.images?.[0] || "https://via.placeholder.com/300?text=No+Image";
+              const numPrice = parsePriceString(item.price);
+              const displayPrice = numPrice ? formatCurrency(numPrice) : (item.price || "Liên hệ");
               
               return (
                 <div key={item.id} onClick={() => openDetail(item)} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:border-purple-500 hover:shadow-md transition relative group">
@@ -142,7 +144,7 @@ export default function LinhKienPage() {
 
                   <div className="p-2 md:p-3">
                     <h3 className="text-xs md:text-sm font-medium text-slate-800 line-clamp-2 min-h-[2.5em] mb-1">{item.name}</h3>
-                    <span className="text-red-600 font-bold text-sm md:text-base block">{item.price || "Liên hệ"}</span>
+                    <span className="text-red-600 font-bold text-sm md:text-base block">{displayPrice}</span>
                   </div>
                 </div>
               );
@@ -180,7 +182,9 @@ export default function LinhKienPage() {
               <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded w-fit mb-2 uppercase flex items-center gap-1"><CircuitBoard size={12}/> Linh Kiện</span>
               <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">{selectedProduct.name}</h2>
               <div className="inline-block bg-purple-50 px-3 py-1 rounded border border-purple-100 mb-6 self-start">
-                  <p className="text-xl font-bold text-purple-700">{selectedProduct.price || "Liên hệ báo giá"}</p>
+                  <p className="text-xl font-bold text-purple-700">
+                    {parsePriceString(selectedProduct.price) ? formatCurrency(parsePriceString(selectedProduct.price)!) : (selectedProduct.price || "Liên hệ báo giá")}
+                  </p>
               </div>
               
               <div className="flex-1 space-y-4">

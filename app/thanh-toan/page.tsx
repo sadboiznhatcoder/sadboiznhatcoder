@@ -20,8 +20,7 @@ import {
   PackageCheck,
   AlertCircle,
 } from "lucide-react";
-import { useCart, removeVietnameseTones, formatCurrency } from "../utils/CartContext";
-import { supabase } from "../utils/supabase";
+import { useCart, formatCurrency } from "../utils/CartContext";
 
 // ============================================================
 // Types
@@ -44,6 +43,7 @@ interface FormErrors {
 }
 
 interface OrderResult {
+  orderCode: string;
   transferContent: string;
   totalAmount: number;
 }
@@ -79,18 +79,6 @@ function validateForm(data: FormData): FormErrors {
   }
 
   return errors;
-}
-
-// ============================================================
-// Generate transfer content
-// ============================================================
-
-function generateTransferContent(name: string, phone: string): string {
-  const cleanName = removeVietnameseTones(name)
-    .toUpperCase()
-    .replace(/\s+/g, "")
-    .replace(/[^A-Z]/g, "");
-  return `${cleanName}${phone.trim()}`;
 }
 
 // ============================================================
@@ -172,52 +160,47 @@ export default function ThanhToanPage() {
 
     setIsSubmitting(true);
 
-    // Tính toán trước — đảm bảo totalAmount là số nguyên (integer)
-    const totalAmount = Math.round(getTotal());
-    const transferContent = generateTransferContent(formData.customerName, formData.phone);
-    let dbSaveError = "";
-
-    // =====================================================
-    // Ghi DB Supabase (Graceful Degradation)
-    // Nếu DB lỗi → vẫn cho hiển thị QR để khách thanh toán
-    // =====================================================
     try {
-      const { error } = await supabase.from("orders").insert([
-        {
-          customer_name: formData.customerName.trim(),
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: formData.customerName.trim(),
           phone: formData.phone.trim(),
           email: formData.email.trim(),
           address: formData.address.trim(),
-          company_name: formData.companyName.trim() || null,
-          tax_code: formData.taxCode.trim() || null,
-          total_amount: totalAmount,
-          transfer_content: transferContent,
+          companyName: formData.companyName.trim() || undefined,
+          taxCode: formData.taxCode.trim() || undefined,
           items: items.map((item) => ({
             id: item.id,
             name: item.name,
             price: item.price,
             quantity: item.quantity,
-            image: item.image,
+            image: item.image || "",
           })),
-        },
-      ]);
+        }),
+      });
 
-      if (error) {
-        console.warn("[Supabase] Lưu đơn hàng thất bại:", error.message);
-        dbSaveError = error.message;
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setSubmitError(data.error || "Không thể tạo đơn hàng. Vui lòng thử lại hoặc gọi Hotline 0912.258.461.");
+        setIsSubmitting(false);
+        return;
       }
-    } catch (err: any) {
-      console.warn("[Supabase] Exception khi lưu đơn hàng:", err?.message);
-      dbSaveError = err?.message || "Lỗi kết nối database";
-    }
 
-    // LUÔN chuyển sang màn hình thành công + QR (dù DB lỗi)
-    setOrderResult({ transferContent, totalAmount });
-    if (dbSaveError) {
-      setSubmitError(`⚠️ Đơn hàng chưa lưu được vào hệ thống (${dbSaveError}). Vui lòng liên hệ Hotline 0912.258.461 sau khi chuyển khoản.`);
+      setOrderResult({
+        orderCode: data.orderCode,
+        transferContent: data.orderCode,
+        totalAmount: data.totalAmount,
+      });
+      clearCart();
+    } catch (err: unknown) {
+      console.error("[Checkout] Error submitting order:", err);
+      setSubmitError("Lỗi kết nối máy chủ khi tạo đơn hàng. Vui lòng liên hệ Hotline 0912.258.461.");
+    } finally {
+      setIsSubmitting(false);
     }
-    clearCart();
-    setIsSubmitting(false);
   };
 
   // Loading state

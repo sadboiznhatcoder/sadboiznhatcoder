@@ -8,7 +8,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { CartProvider } from "./utils/CartContext";
 import CartFloatingButton from "./components/CartFloatingButton";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin", "vietnamese"], display: "swap" });
 
 // === CẤU HÌNH SEO CHUẨN (TOÀN DIỆN) ===
 export const metadata: Metadata = {
@@ -278,24 +278,23 @@ export default function RootLayout({
 
         <ChatWidgetLoader />
 
-        {/* === TAWK.TO LIVE CHAT (Người thật) === */}
-        {/* Đổi INSERT_TAWKTO_PROPERTY_ID_HERE thành Property ID thật từ dashboard Tawk.to */}
-        <Script id="tawk-to" strategy="afterInteractive">
+        {/* Tawk.to: Uncomment and replace INSERT_TAWKTO_PROPERTY_ID_HERE with your real Property ID */}
+        {/* <Script id="tawk-to" strategy="afterInteractive">
           {`
             var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
             (function(){
               var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
               s1.async = true;
-              s1.src = 'https://embed.tawk.to/INSERT_TAWKTO_PROPERTY_ID_HERE/default';
+              s1.src = 'https://embed.tawk.to/YOUR_PROPERTY_ID/default';
               s1.charset = 'UTF-8';
               s1.setAttribute('crossorigin','*');
               s0.parentNode.insertBefore(s1, s0);
             })();
           `}
-        </Script>
+        </Script> */}
 
-        {/* CSS: Đẩy Tawk.to widget sang góc dưới bên TRÁI */}
-        <style>{`
+        {/* CSS: Tawk.to widget position (activate when Tawk.to is configured) */}
+        {/* <style>{`
           iframe[title="chat widget"],
           .tawk-min-container,
           #tawk-bubble-container {
@@ -306,7 +305,7 @@ export default function RootLayout({
             left: 16px !important;
             right: auto !important;
           }
-        `}</style>
+        `}</style> */}
 
         <Analytics />
       </body>

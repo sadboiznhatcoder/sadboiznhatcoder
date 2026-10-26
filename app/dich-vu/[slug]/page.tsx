@@ -118,6 +118,10 @@ export async function generateMetadata({
 }
 
 // === JSON-LD LOCAL BUSINESS SCHEMA CHO KHU VỰC ===
+function safeJsonLd(obj: unknown): string {
+  return JSON.stringify(obj).replace(/</g, "\\u003c");
+}
+
 function LocalServiceSchema({
   area,
   slug,
@@ -146,7 +150,7 @@ function LocalServiceSchema({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}
     />
   );
 }

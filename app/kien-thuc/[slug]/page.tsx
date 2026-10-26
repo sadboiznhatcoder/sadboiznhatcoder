@@ -65,6 +65,11 @@ export async function generateMetadata({
 // JSON-LD Article Schema
 // ============================================================
 
+// Helper: Chống XSS khi nhúng dữ liệu vào script JSON-LD
+function safeJsonLd(obj: unknown): string {
+  return JSON.stringify(obj).replace(/</g, "\\u003c");
+}
+
 function ArticleSchema({ post }: { post: Post }) {
   const schema = {
     "@context": "https://schema.org",
@@ -96,7 +101,7 @@ function ArticleSchema({ post }: { post: Post }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}
     />
   );
 }
@@ -119,7 +124,7 @@ function BreadcrumbSchema({ post }: { post: Post }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}
     />
   );
 }
