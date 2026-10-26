@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 
+// Bật ISR cho trang dịch vụ Local SEO (revalidate mỗi 3600s = 1h)
+export const revalidate = 3600;
+
 // === CẤU HÌNH CÁC KHU VỰC DỊCH VỤ (LOCAL SEO) ===
 const serviceAreas: Record<
   string,

@@ -1,8 +1,11 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Phone, MessageCircle, ArrowRight } from "lucide-react";
-import { getPostBySlug, getPosts, generateSlug, type Post } from "../../utils/supabase";
+import { getPostBySlug, getPostsSummary, type Post, type PostSummary } from "../../utils/supabase";
 import { notFound } from "next/navigation";
+
+// Bật ISR cho trang chi tiết bài viết (revalidate mỗi 3600s = 1h)
+export const revalidate = 3600;
 
 // ============================================================
 // GENERATE METADATA: SEO tự động từ Supabase
@@ -146,7 +149,7 @@ export default async function KienThucDetailPage({
   }
 
   // Fetch 3 bài viết liên quan (cùng category, loại trừ bài hiện tại)
-  const allPosts = await getPosts();
+  const allPosts = await getPostsSummary();
   const relatedPosts = allPosts
     .filter((p) => p.id !== post.id)
     .slice(0, 3);

@@ -24,12 +24,13 @@ export default function Home() {
   useEffect(() => {
     const timer = setTimeout(() => setShowPopup(true), 1000);
     
-    // === THAY ĐỔI: Tải bài viết từ Supabase thay vì localStorage ===
+    // Tải bài viết mới nhất từ Supabase (giới hạn 6 bài để tối ưu TTFB/LCP)
     const fetchPosts = async () => {
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('id, title, slug, content, image, created_at')
+        .order('created_at', { ascending: false })
+        .limit(6);
       
       if (!error && data) {
         setIntroPosts(data);

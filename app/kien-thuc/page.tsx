@@ -1,7 +1,10 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, Calendar, ArrowRight, Tag } from "lucide-react";
-import { getPosts, type Post } from "../utils/supabase";
+import { getPostsSummary, type PostSummary } from "../utils/supabase";
+
+// Bật ISR cho trang danh mục kiến thức (revalidate mỗi 3600s = 1h)
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Kiến Thức & Hướng Dẫn Sửa Chữa Máy CNC | N.A.T Automation",
@@ -47,7 +50,7 @@ const categoryLabels: Record<string, string> = {
 };
 
 export default async function KienThucPage() {
-  const posts: Post[] = await getPosts();
+  const posts: PostSummary[] = await getPostsSummary();
 
   return (
     <main className="min-h-screen bg-slate-50 font-sans">
@@ -88,7 +91,7 @@ export default async function KienThucPage() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post: Post) => {
+            {posts.map((post: PostSummary) => {
               const label = categoryLabels[post.category] || post.category || "Kiến thức";
               return (
                 <article
@@ -126,7 +129,7 @@ export default async function KienThucPage() {
 
                     {/* Mô tả SEO (ưu tiên meta_description) */}
                     <p className="text-slate-500 text-sm line-clamp-3 mb-4 flex-1">
-                      {post.meta_description || post.content?.substring(0, 120) + "..."}
+                      {post.meta_description || "Kiến thức chuyên sâu và hướng dẫn sửa chữa máy CNC từ kỹ sư N.A.T Automation."}
                     </p>
 
                     {/* Link đọc tiếp */}
