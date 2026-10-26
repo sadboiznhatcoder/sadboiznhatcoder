@@ -151,32 +151,65 @@ QUY TẮC TRẢ LỜI:
 // ---------------------------------------------------------------------------
 type StandardMessage = { role: "system" | "user" | "assistant"; content: string };
 
+const GROQ_FALLBACK_MODELS = [
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3.8-27b",
+  "llama-3.3-70b-versatile",
+];
+
 async function callGroq(
   messages: StandardMessage[],
   apiKey: string,
-  model: string,
+  preferredModel: string,
   signal: AbortSignal
 ): Promise<string> {
   const GroqModule = (await import("groq-sdk")).default;
   const groq = new GroqModule({ apiKey });
 
-  const completion = await groq.chat.completions.create(
-    {
-      model,
-      messages: messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      temperature: 0.6,
-      max_tokens: 500,
-    },
-    { signal }
+  const candidateModels = Array.from(
+    new Set([preferredModel, ...GROQ_FALLBACK_MODELS].filter(Boolean))
   );
 
-  return (
-    completion.choices[0]?.message?.content ||
-    "Dạ, em chưa nhận diện được thông tin. Anh/chị gọi hotline 0912.258.461 giúp em nhé!"
-  );
+  let lastModelError: unknown = null;
+  for (const model of candidateModels) {
+    if (signal.aborted) break;
+    try {
+      const completion = await groq.chat.completions.create(
+        {
+          model,
+          messages: messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+          temperature: 0.6,
+          max_tokens: 500,
+        },
+        { signal }
+      );
+
+      return (
+        completion.choices[0]?.message?.content ||
+        "Dạ, em chưa nhận diện được thông tin. Anh/chị gọi hotline 0912.258.461 giúp em nhé!"
+      );
+    } catch (err: unknown) {
+      lastModelError = err;
+      const msg = String((err as { message?: string })?.message || "").toLowerCase();
+      // If model not found or account doesn't have access, try next candidate
+      if (
+        msg.includes("model") ||
+        msg.includes("not exist") ||
+        msg.includes("not found") ||
+        msg.includes("access")
+      ) {
+        console.warn(`[Groq] Model "${model}" not available (${msg}), attempting next candidate...`);
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw lastModelError || new Error("All Groq models failed");
 }
 
 async function callGemini(
@@ -279,7 +312,7 @@ export async function POST(req: Request) {
     const inventoryContext = await buildInventoryContext();
     const systemPrompt = buildSystemPrompt(inventoryContext);
 
-    const groqModel = getEnv("GROQ_MODEL") || "llama-3.3-70b-versatile";
+    const groqModel = getEnv("GROQ_MODEL") || "openai/gpt-oss-120b";
     const geminiModel = getEnv("GEMINI_MODEL") || "gemini-2.5-flash";
 
     let lastError: unknown = null;
