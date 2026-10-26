@@ -1,36 +1,108 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# N.A.T Automation — Web Platform & CMS Quản Trị Kỹ Thuật CNC
 
-## Getting Started
+Hệ thống website chính thức của **Công Ty TNHH Tự Động Hóa N.A.T** (`tailieucnc.xyz`). Chuyên gia sửa chữa máy CNC, bảo trì định kỳ, cung cấp linh kiện tự động hóa chính hãng (Fanuc, Siemens, Mitsubishi, Yaskawa) và hệ thống CMS Technical SEO Topic Cluster.
 
-First, run the development server:
+---
 
+## 🛠️ Tech Stack & Kiến Trúc
+
+- **Framework**: [Next.js 16 (App Router)](https://nextjs.org) + [React 19](https://react.dev)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com) + [Lucide React](https://lucide.dev)
+- **Database & Auth**: [Supabase](https://supabase.com) (PostgreSQL với Row Level Security - RLS)
+- **AI Trợ Lý Ảo**: Groq Cloud SDK (`llama-3.3-70b-versatile`) + Fallback sang Google GenAI (`@google/genai` - `gemini-2.5-flash`)
+- **Thanh Toán**: VietQR API (MB Bank tự động sinh mã chuyển khoản chuẩn `NAT-XXXXXX`)
+- **Triển khai**: [Vercel](https://vercel.com) Edge/NodeJS Runtime
+
+---
+
+## 🔒 Kiến Trúc Bảo Mật & Luồng Dữ Liệu
+
+1. **Supabase RLS (Row Level Security)**:
+   - Bảng `orders`: Khóa quyền `SELECT` công khai. Chỉ `authenticated` (Admin) và `service_role` (Server API) mới có quyền đọc thông tin đơn hàng, bảo vệ 100% PII của khách hàng.
+   - Bảng `posts`: Cho phép công khai `SELECT` (phục vụ SEO / Googlebot). Các thao tác `INSERT`, `UPDATE`, `DELETE` chỉ dành riêng cho Admin đăng nhập.
+2. **Server-side Checkout (`/api/orders`)**:
+   - Khách hàng không ghi trực tiếp vào Database. Mọi đơn hàng đều gửi qua API route server-side để xác thực dữ liệu bằng `Zod`.
+   - Server tự động tính lại tổng tiền dựa trên giá chuẩn, sinh mã đơn `order_code` (`NAT-XXXXXX`) làm nội dung chuyển khoản bảo mật thay cho việc ghép tên + SĐT.
+   - Giới hạn tần suất gọi (Rate Limiting) theo địa chỉ IP chống spam đơn hàng.
+3. **Admin Authentication**:
+   - Không lưu mật khẩu hoặc logic kiểm tra ở client-side.
+   - API `/api/admin/login` xác thực server-side bằng thuật toán so sánh chuỗi hằng số thời gian (`timingSafeEqual`) chống Timing Attacks và cấp HTTP-only Cookie (`admin_session`) an toàn.
+4. **Chống XSS**:
+   - Toàn bộ dữ liệu động đưa vào JSON-LD Schema được tuần tự hóa an toàn qua hàm `safeJsonLd()`.
+
+---
+
+## 🚀 Hướng Dẫn Cài Đặt & Chạy Local
+
+### 1. Yêu cầu hệ thống
+- Node.js >= 20.x
+- npm >= 10.x
+
+### 2. Cài đặt Dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/sadboiznhatcoder/sadboiznhatcoder.git
+cd sadboiznhatcoder
+npm ci
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Cấu hình Biến Môi Trường
+Sao chép file `.env.example` thành `.env.local` và điền các khóa API:
+```bash
+cp .env.example .env.local
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Thiết lập Cơ sở dữ liệu Supabase
+Truy cập **Supabase Dashboard** -> **SQL Editor** và chạy theo thứ tự:
+1. `supabase-schema.sql` (Tạo cấu trúc bảng `posts` chuẩn SEO).
+2. `orders-schema.sql` (Tạo bảng `orders` với RLS bảo mật).
+3. `supabase-migration-001-security.sql` (Chạy migration cập nhật bảo mật nếu DB đã có dữ liệu từ trước).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 5. Chạy môi trường Development
+```bash
+npm run dev
+```
+Truy cập [http://localhost:3000](http://localhost:3000) trên trình duyệt.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🧪 Các Lệnh Kiểm Tra Chất Lượng Code
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Kiểm tra định dạng và quy chuẩn ESLint
+npm run lint
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Kiểm tra kiểu dữ liệu TypeScript (Strict Typecheck)
+npm run typecheck
 
-## Deploy on Vercel
+# Build thử nghiệm môi trường Production
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🌐 Cấu Hình Biến Môi Trường Trên Vercel
+
+Vào mục **Project Settings -> Environment Variables** trên Vercel và cấu hình các biến sau:
+
+| Tên biến | Bắt buộc | Mô tả |
+| :--- | :---: | :--- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Có | URL project Supabase (`https://xxx.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Có | Public Anon Key của Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Có | Service Role Key (Chỉ dùng server-side để quản lý đơn) |
+| `GROQ_API_KEY` | Khuyên dùng | API Key của Groq Cloud để chạy trợ lý kỹ thuật AI |
+| `GROQ_MODEL` | Không | Mặc định: `llama-3.3-70b-versatile` |
+| `GEMINI_API_KEY` | Khuyên dùng | API Key của Google AI Studio (Dùng làm cơ chế Fallback tự động) |
+| `GEMINI_MODEL` | Không | Mặc định: `gemini-2.5-flash` |
+| `ADMIN_USERNAME` | Không | Tên tài khoản quản trị (Mặc định: `admin`) |
+| `ADMIN_PASSWORD` | Có | Mật khẩu truy cập trang quản trị `/admin` |
+| `ADMIN_SESSION_SECRET` | Khuyên dùng | Chuỗi ngẫu nhiên tối thiểu 32 ký tự để mã hóa session cookie |
+
+---
+
+## 📞 Liên Hệ & Hỗ Trợ Kỹ Thuật
+
+- **Công Ty TNHH Tự Động Hóa N.A.T**
+- **Trụ sở**: 74 Đại Hưng, Lạc Thị, Ngọc Hồi, Thanh Trì, Hà Nội
+- **Chi nhánh phục vụ**: Hà Nội, TP.HCM, Tây Ninh, Bình Dương, Đồng Nai, Long An
+- **Hotline Kỹ thuật 24/7**: 0912.258.461
+- **Website**: [tailieucnc.xyz](https://tailieucnc.xyz)

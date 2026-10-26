@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Phone, MessageCircle, ArrowRight } from "lucide-react";
-import { getPostBySlug, getPostsSummary, type Post, type PostSummary } from "../../utils/supabase";
+import { getPostBySlug, getPostsSummary, type Post } from "../../utils/supabase";
 import { notFound } from "next/navigation";
 
 // Bật ISR cho trang chi tiết bài viết (revalidate mỗi 3600s = 1h)

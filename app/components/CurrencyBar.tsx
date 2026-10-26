@@ -2,26 +2,15 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, DollarSign, Globe } from "lucide-react";
 
-export default function CurrencyBar() {
-  const [rates, setRates] = useState<any>(null);
+interface CurrencyBlockProps {
+  usd: string;
+  jpy: string;
+  eur: string;
+  cny: string;
+}
 
-  useEffect(() => {
-    fetch("https://open.er-api.com/v6/latest/USD")
-      .then((res) => res.json())
-      .then((data) => setRates(data.rates))
-      .catch((err) => console.error(err));
-  }, []);
-
-  if (!rates) return null;
-
-  // Tính toán tỷ giá giả định
-  const usd = Math.round(rates.VND).toLocaleString("vi-VN");
-  const jpy = Math.round(rates.VND / rates.JPY).toLocaleString("vi-VN");
-  const eur = Math.round(rates.VND / rates.EUR).toLocaleString("vi-VN");
-  const cny = Math.round(rates.VND / rates.CNY).toLocaleString("vi-VN"); // Thêm tiền Trung Quốc (Thường dùng mua linh kiện)
-
-  // Nội dung của 1 block thông tin
-  const ContentBlock = () => (
+function ContentBlock({ usd, jpy, eur, cny }: CurrencyBlockProps) {
+  return (
     <div className="flex items-center gap-12 px-6">
       {/* JPY - Quan trọng nhất */}
       <div className="flex items-center gap-2 group cursor-pointer">
@@ -55,19 +44,37 @@ export default function CurrencyBar() {
       </div>
     </div>
   );
+}
+
+export default function CurrencyBar() {
+  const [rates, setRates] = useState<any>(null);
+
+  useEffect(() => {
+    fetch("https://open.er-api.com/v6/latest/USD")
+      .then((res) => res.json())
+      .then((data) => setRates(data.rates))
+      .catch((err) => console.error(err));
+  }, []);
+
+  if (!rates) return null;
+
+  // Tính toán tỷ giá giả định
+  const usd = Math.round(rates.VND).toLocaleString("vi-VN");
+  const jpy = Math.round(rates.VND / rates.JPY).toLocaleString("vi-VN");
+  const eur = Math.round(rates.VND / rates.EUR).toLocaleString("vi-VN");
+  const cny = Math.round(rates.VND / rates.CNY).toLocaleString("vi-VN");
 
   return (
     <div className="bg-[#0f172a] border-b border-slate-800 overflow-hidden py-2 select-none relative z-50">
       {/* Wrapper chứa hiệu ứng chạy */}
       <div className="animate-infinite-scroll flex w-max">
-        {/* Nhân bản 4 lần để đảm bảo lấp đầy mọi màn hình kể cả màn hình siêu rộng */}
-        <ContentBlock />
-        <ContentBlock />
-        <ContentBlock />
-        <ContentBlock />
+        <ContentBlock usd={usd} jpy={jpy} eur={eur} cny={cny} />
+        <ContentBlock usd={usd} jpy={jpy} eur={eur} cny={cny} />
+        <ContentBlock usd={usd} jpy={jpy} eur={eur} cny={cny} />
+        <ContentBlock usd={usd} jpy={jpy} eur={eur} cny={cny} />
       </div>
       
-      {/* Hiệu ứng mờ 2 bên cạnh để nhìn cho ảo */}
+      {/* Hiệu ứng mờ 2 bên cạnh */}
       <div className="absolute top-0 left-0 h-full w-20 bg-gradient-to-r from-[#0f172a] to-transparent z-10 pointer-events-none"></div>
       <div className="absolute top-0 right-0 h-full w-20 bg-gradient-to-l from-[#0f172a] to-transparent z-10 pointer-events-none"></div>
     </div>
