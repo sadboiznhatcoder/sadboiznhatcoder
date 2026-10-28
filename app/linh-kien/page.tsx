@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Phone, X, Pencil, Trash2, CircuitBoard, Loader2, ShoppingCart, Check } from "lucide-react";
-import { checkAuth } from "../utils/auth";
+// import { checkAuth } from "../utils/auth"; // ĐÃ THAY THẾ: không dùng localStorage nữa
 import { supabase } from "../utils/supabase";
 import { useCart, parsePriceString, formatCurrency } from "../utils/CartContext";
 
@@ -38,10 +38,12 @@ export default function LinhKienPage() {
   };
 
   useEffect(() => {
-    // 1. Kiểm tra Admin (ở client)
-    if (typeof window !== "undefined") {
-        setIsAdmin(checkAuth());
-    }
+    // 1. Kiểm tra Admin qua server-side session API (HMAC-signed cookie)
+    //    Không dùng localStorage/cookie-JS để tránh giả mạo quyền Admin
+    fetch("/api/admin/session")
+      .then((r) => r.json())
+      .then((d) => setIsAdmin(d.authenticated === true))
+      .catch(() => setIsAdmin(false));
 
     // 2. Tải dữ liệu từ Supabase
     loadData();

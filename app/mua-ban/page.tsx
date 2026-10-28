@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Phone, X, Pencil, Trash2, Loader2 } from "lucide-react";
-import { checkAuth } from "../utils/auth"; // Đã đổi thành checkAuth cho chuẩn
+// import { checkAuth } from "../utils/auth"; // ĐÃ THAY THẾ: không dùng localStorage nữa
 import { supabase } from "../utils/supabase"; // Import kết nối Database
 
 export default function MuaBanPage() {
@@ -12,13 +12,15 @@ export default function MuaBanPage() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [activeImage, setActiveImage] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Thêm trạng thái loading
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Kiểm tra Admin (để hiện nút Xóa/Sửa)
-    if (typeof window !== "undefined") {
-        setIsAdmin(checkAuth());
-    }
+    // 1. Kiểm tra Admin qua server-side session API (HMAC-signed cookie)
+    //    Không dùng localStorage/cookie-JS để tránh giả mạo quyền Admin
+    fetch("/api/admin/session")
+      .then((r) => r.json())
+      .then((d) => setIsAdmin(d.authenticated === true))
+      .catch(() => setIsAdmin(false));
 
     // 2. Tải dữ liệu từ Supabase
     loadData();
